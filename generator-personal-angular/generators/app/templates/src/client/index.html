@@ -1,0 +1,38 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <title>Title</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <base href="/">
+
+    <!-- inject:css -->
+    <!-- endinject -->
+</head>
+
+<body ng-app="<%= angularModuleName %>" ng-controller="ApplicationController">
+    <h1>The template works yo</h1>
+    <div class="content" ng-view>
+
+    </div>
+
+    <!-- weinre
+	
+	Command
+	  weinre --httpPort 8081 --boundHost 10.0.0.21
+	
+	Script
+	  <script src="http://10.0.0.21:8081/target/target-script-min.js#anonymous"></script>
+	
+	-->
+
+    <!-- inject:js -->
+    <!-- endinject -->
+</body>
+
+</html>

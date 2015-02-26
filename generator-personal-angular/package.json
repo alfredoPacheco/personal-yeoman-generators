@@ -1,0 +1,28 @@
+{
+  "name": "generator-personal-angular",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olsonpm/generator-personal-angular.git"
+  },
+  "author": "Phil Olson <philip.olson@protonmail.ch> (https://github.com/olsonpm)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/olsonpm/generator-personal-angular/issues"
+  },
+  "homepage": "https://github.com/olsonpm/generator-personal-angular",
+  "dependencies": {
+    "bluebird": "^2.9.9",
+    "bluebird-inquirer": "0.0.1",
+    "fs-bluebird": "^0.1.2",
+    "lambda-js": "^0.1.5",
+    "node-helpers": "git://github.com/olsonpm/node-helpers.git",
+    "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
+    "yeoman-generator": "^0.18.9"
+  }
+}

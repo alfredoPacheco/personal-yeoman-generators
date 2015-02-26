@@ -1,0 +1,6 @@
+{
+    "home": {
+        "url": "home"
+        , "path": "static/home"
+    }
+}
