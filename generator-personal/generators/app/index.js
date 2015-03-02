@@ -5,7 +5,7 @@
 //---------//
 
 var generators = require('yeoman-generator')
-    , pgd = require('personal-generator-common')
+    , pgc = require('personal-generator-common')
     , bInquirer = require('bluebird-inquirer')
     , l = require('lambda-js')
     , path = require('path')
@@ -59,6 +59,14 @@ module.exports = generators.Base.extend({
             required: false
             , desc: 'Composes with the fonts generator'
         });
+        this.option('includeGit', {
+            required: false
+            , desc: 'Creates a git repository'
+        });
+        this.option('includeHeroku', {
+            required: false
+            , desc: 'Creates a heroku app'
+        });
         argsArray = (this.projectName)
             ? [this.projectName]
             : [];
@@ -69,7 +77,7 @@ module.exports = generators.Base.extend({
 
         // needed to use project name in multiple generators. The below just initializes the project name, if passed,
         //   by setting our destinationRoot to it plus runs it through a validator.
-        var pname = new pgd.ProjectNameState(self);
+        var pname = new pgc.ProjectNameState(self);
 
         bInquirer.prompt([
                 pname.getPrompt() // only prompts if a project name wasn't passed in via arguments
@@ -133,6 +141,24 @@ module.exports = generators.Base.extend({
                     , 'when': function() {
                         return typeof self.options.includeFonts === 'undefined';
                     }
+                }, {
+                    'name': 'includeGit'
+                    , 'message': 'Create git repository? (y/n)'
+                    , 'type': 'list'
+                    , 'choices': ['y', 'n']
+                    , 'default': 1
+                    , 'when': function() {
+                        return typeof self.options.includeGit === 'undefined';
+                    }
+                }, {
+                    'name': 'includeHeroku'
+                    , 'message': 'Create heroku app? (y/n)'
+                    , 'type': 'list'
+                    , 'choices': ['y', 'n']
+                    , 'default': 1
+                    , 'when': function() {
+                        return typeof self.options.includeHeroku === 'undefined';
+                    }
                 }
             ])
             .then(function(answers) {
@@ -146,6 +172,9 @@ module.exports = generators.Base.extend({
                 self.options.includeBuddySystem = self.options.includeBuddySystem || answers.includeBuddySystem;
                 self.options.includeHoverIntent = self.options.includeHoverIntent || answers.includeHoverIntent;
                 self.options.includeFonts = self.options.includeFonts || answers.includeFonts;
+                self.options.includeGit = self.options.includeGit || answers.includeGit;
+                self.options.includeHeroku = self.options.includeHeroku || answers.includeHeroku;
+
 
                 self.composeWith('personal-angular', {
                     args: argsArray
@@ -198,6 +227,24 @@ module.exports = generators.Base.extend({
                         , includeFonts: self.options.includeFonts
                     }
                 });
+
+                if (self.options.includeGit) {
+                    self.composeWith('personal-git', {
+                        args: argsArray
+                        , options: {
+                            repoName: self.projectName
+                        }
+                    });
+                }
+
+                if (self.options.includeHeroku) {
+                    self.composeWith('personal-heroku', {
+                        args: argsArray
+                        , options: {
+                            herokuAppName: self.projectName
+                        }
+                    });
+                }
 
                 done();
             });

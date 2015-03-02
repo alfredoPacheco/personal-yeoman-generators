@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-genArray=( "angular" "express" "fonts" "javascript-libs" "pjson" "ptr" "scss" )
+genArray=( "angular" "express" "fonts" "javascript-libs" "pjson" "ptr" "scss" "git" "heroku" )
 
 pushd "./generator-personal"
 	npm install -g ./ &

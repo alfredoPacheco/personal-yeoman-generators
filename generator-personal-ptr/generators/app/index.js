@@ -6,7 +6,7 @@
 //---------//
 
 var generators = require('yeoman-generator')
-    , pgd = require('personal-generator-common')
+    , pgc = require('personal-generator-common')
     , path = require('path')
     , bPromise = require('bluebird')
     , bInquirer = require('bluebird-inquirer')
@@ -74,7 +74,7 @@ module.exports = generators.Base.extend({
 
         // needed to use project name in multiple generators. The below just initializes the project name, if passed,
         //   by setting our destinationRoot to it plus runs it through a validator.
-        var pname = new pgd.ProjectNameState(self);
+        var pname = new pgc.ProjectNameState(self);
 
         bInquirer.prompt([
             pname.getPrompt() // only prompts if a project name wasn't passed in via arguments

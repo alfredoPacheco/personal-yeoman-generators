@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/olsonpm/generator-personal.git"
+    "url": "https://github.com/olsonpm/personal-yeoman-generators.git"
   },
   "author": "Phil Olson <philip.olson@protonmail.ch> (https://github.com/olsonpm)",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/olsonpm/generator-personal/issues"
+    "url": "https://github.com/olsonpm/personal-yeoman-generators/issues"
   },
-  "homepage": "https://github.com/olsonpm/generator-personal",
+  "homepage": "https://github.com/olsonpm/personal-yeoman-generators",
   "dependencies": {
     "bluebird-inquirer": "0.0.1",
     "camelcase": "^1.0.2",

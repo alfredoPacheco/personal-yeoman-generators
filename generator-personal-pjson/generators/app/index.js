@@ -12,7 +12,7 @@ var generators = require('yeoman-generator')
     , bNpm = require('./bluebird-npm')
     , bRimraf = bPromise.promisify(require('rimraf'))
     , bInquirer = require('bluebird-inquirer')
-    , pgd = require('personal-generator-common');
+    , pgc = require('personal-generator-common');
 
 
 //------//
@@ -63,7 +63,7 @@ module.exports = generators.Base.extend({
 
         // needed to use project name in multiple generators. The below just initializes the project name by setting our destinationRoot to it
         //   plus runs it through a validator.
-        pname = new pgd.ProjectNameState(self);
+        pname = new pgc.ProjectNameState(self);
 
         return npmInitPrompt(self)
             .then(function() {

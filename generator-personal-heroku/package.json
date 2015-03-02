@@ -1,5 +1,5 @@
 {
-  "name": "generator-personal-express",
+  "name": "generator-personal-heroku",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -13,7 +13,7 @@
   "author": "Phil Olson <philip.olson@protonmail.ch> (https://github.com/olsonpm)",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/olsonpm/personal-yeoman-generators/issues"
+    "url": "https://github.com/olsonpm/personal-yeoman-generators.git/issues"
   },
   "homepage": "https://github.com/olsonpm/personal-yeoman-generators",
   "dependencies": {
