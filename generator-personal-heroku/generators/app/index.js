@@ -8,7 +8,9 @@
 var generators = require('yeoman-generator')
     , bInquirer = require('bluebird-inquirer')
     , pgc = require('personal-generator-common')
-    , https = require('https');
+    , https = require('https')
+    , sys = require('sys')
+    , exec = require('child_process').exec;
 
 
 //------//
@@ -42,7 +44,7 @@ module.exports = generators.Base.extend({
         //   plus runs it through a validator.
         var pname = new pgc.ProjectNameState(self);
 
-        return bInquirer.prompt([
+        bInquirer.prompt([
                 pname.getPrompt() // only prompts if a project name wasn't passed in via arguments
                 , {
                     'name': 'herokuAppName'
@@ -64,6 +66,10 @@ module.exports = generators.Base.extend({
     'writing': function writing() {
         var self = this;
         var done = self.async();
+
+        exec("git remote add heroku-prod git@heroku.com:" + self.options.herokuAppName + ".git", {
+            cwd: self.destinationRoot()
+        }, sysPrint);
 
         var postData = JSON.stringify({
             name: self.options.herokuAppName
@@ -90,3 +96,21 @@ module.exports = generators.Base.extend({
         req.end(undefined, undefined, done);
     }
 });
+
+
+//------------------//
+// Helper Functions //
+//------------------//
+
+function sysPrint(error, stdout, stderr) {
+    var errs = [];
+    if (error !== null) {
+        errs.push('Runtime Error: git command caused an error: ' + error);
+    }
+    if (stderr) {
+        errs.push('Runtime Error: git command caused stderr: ' + stderr);
+    }
+    if (errs.length > 0) {
+        throw new Error(errs.join('\n'));
+    }
+}

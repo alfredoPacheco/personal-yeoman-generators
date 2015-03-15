@@ -1,0 +1,25 @@
+{
+  "name": "generator-personal-postgresql",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olsonpm/personal-yeoman-generators.git"
+  },
+  "author": "Phil Olson <philip.olson@protonmail.ch> (https://github.com/olsonpm)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/olsonpm/personal-yeoman-generators.git/issues"
+  },
+  "homepage": "https://github.com/olsonpm/personal-yeoman-generators",
+  "dependencies": {
+    "bluebird": "^2.9.9",
+    "bluebird-inquirer": "0.0.1",
+    "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
+    "yeoman-generator": "^0.18.9"
+  }
+}

@@ -53,7 +53,7 @@ module.exports = generators.Base.extend({
         //   plus runs it through a validator.
         var pname = new pgc.ProjectNameState(self);
 
-        return bInquirer.prompt([
+        bInquirer.prompt([
                 pname.getPrompt() // only prompts if a project name wasn't passed in via arguments
                 , {
                     'name': 'repoName'
@@ -94,10 +94,14 @@ module.exports = generators.Base.extend({
 //------------------//
 
 function sysPrint(error, stdout, stderr) {
-    sys.print('stdout: ' + stdout);
-    sys.print('stderr: ' + stderr);
+    var errs = [];
     if (error !== null) {
-        console.log('exec error: ' + error);
+        errs.push('Runtime Error: git command caused an error: ' + error);
     }
-    sys.puts(stdout);
+    if (stderr) {
+        errs.push('Runtime Error: git command caused stderr: ' + stderr);
+    }
+    if (errs.length > 0) {
+        throw new Error(errs.join('\n'));
+    }
 }

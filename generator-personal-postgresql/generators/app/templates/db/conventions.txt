@@ -1,0 +1,4 @@
+tables: singular and underscore-separated
+columns: lower-case and underscore-separated.  Prefix with table name unless you are sure the name will never be ambiguous in the future.
+pk: column+'_pkey'
+fk: fk__ + 'foreign column name' + __ + 'primary column name'

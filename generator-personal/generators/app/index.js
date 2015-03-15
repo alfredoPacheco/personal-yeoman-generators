@@ -165,6 +165,7 @@ module.exports = generators.Base.extend({
                 if (answers.projectName) {
                     self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                     argsArray.push(answers.projectName);
+                    self.projectName = answers.projectName;
                 }
                 self.options.angularModuleName = self.options.angularModuleName || answers.angularModuleName;
                 self.options.includeExpress = self.options.includeExpress || answers.includeExpress;
@@ -242,6 +243,15 @@ module.exports = generators.Base.extend({
                         args: argsArray
                         , options: {
                             herokuAppName: self.projectName
+                        }
+                    });
+                }
+
+                if (self.options.includePostgres) {
+                    self.composeWith('personal-postgres', {
+                        args: argsArray
+                        , options: {
+                            dbName: self.projectName.replace(/-/g, '_');
                         }
                     });
                 }
