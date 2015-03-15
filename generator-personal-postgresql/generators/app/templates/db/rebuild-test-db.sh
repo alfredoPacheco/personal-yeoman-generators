@@ -12,8 +12,12 @@ psql ${psqlConnect} -c "create database <%= dbName %>_test"
 ./generate-db-schema.sh
 
 psql ${connectToTest} -f ./db-schema.out
-psql ${connectToTest} -c "grant select, insert, update, delete on all tables in schema public to <%= dbName %>_test;"
-psql ${connectToTest} -c "grant select, update on all sequences in schema public to <%= dbName %>_test;"
+psql ${connectToTest} -c "\
+	grant select, insert, update, delete on all tables in schema public to <%= dbName %>_test; \
+	grant select, update on all sequences in schema public to <%= dbName %>_test; \
+	alter default privileges in schema public grant all on tables to <%= dbName %>_test; \
+	alter default privileges in schema public grant all on sequences to <%= dbName %>_test; \
+"
 
 # Insert test data
 

@@ -86,8 +86,9 @@ module.exports = generators.Base.extend({
                     cwd: self.destinationRoot()
                 })
                 .then(function() {
-                    return bExec("psql -c \"grant select, insert, update, delete on all tables in schema public to " + dbName
-                        + "; grant select, update on all sequences in schema public to " + dbName + "\"", {
+                    return bExec("psql -c \""
+                        + "alter default privileges in schema public grant select, insert, update, delete on tables to " + dbName
+                        + "; alter default privileges in schema public grant select, update on sequences to " + dbName + "\"", {
                             cwd: self.destinationRoot()
                         })
                 });
