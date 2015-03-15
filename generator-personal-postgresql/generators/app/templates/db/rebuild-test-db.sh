@@ -1,6 +1,13 @@
 #!/bin/bash
 # --execute=/bin/bash--
 
+connections=$(psql -t -c "select count(*) from pg_stat_activity where datname='<%= dbName %>_test'")
+
+if [ ${connections} != "0" ]; then
+	printf "Cannot run while there are current connections to the database\n"
+	exit 0
+fi
+
 ms1=$(date '+%s%2N')
 
 psqlConnect="-h /run/postgresql/ -d <%= dbName %>"
