@@ -22,15 +22,19 @@ psql ${connectToTest} -f ./db-schema.out
 psql ${connectToTest} -c "\
 	grant select, insert, update, delete on all tables in schema public to <%= dbName %>_test; \
 	grant select, update on all sequences in schema public to <%= dbName %>_test; \
-	alter default privileges in schema public grant all on tables to <%= dbName %>_test; \
-	alter default privileges in schema public grant all on sequences to <%= dbName %>_test; \
+	revoke all on all tables in schema public from <%= dbName %>; \
+	revoke all on all sequences in schema public from <%= dbName %>; \
+	alter default privileges in schema public grant select, insert, update, delete on tables to <%= dbName %>_test; \
+	alter default privileges in schema public grant select, update on sequences to <%= dbName %>_test; \
+	alter default privileges in schema public revoke select, insert, update, delete on tables from <%= dbName %>; \
+	alter default privileges in schema public revoke select, update on sequences from <%= dbName %>; \
 "
 
 # Insert test data
-
-for f in "./test-data/*"; do
-	psql ${connectToTest} -f "${f}"
-done 
+if [ -f ./test-data/insert-all-test-data.sh ]; then
+	printf "inserting all test data\n"
+	./test-data/insert-all-test-data.sh
+fi
 
 ms2=$(date '+%s%2N')
 msDiff=$((${ms2}-${ms1}))
