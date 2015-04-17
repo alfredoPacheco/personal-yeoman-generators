@@ -19,7 +19,6 @@ var bPromise = require('bluebird')
     , ptr = require('promise-task-runner')
     , streamToPromise = require('stream-to-promise')
     , through2 = require('through2')
-    , uglifyStream = require('uglify-stream')
     , vFs = require('vinyl-fs')
     , vss = require('vinyl-source-stream')
     , VTransform = require('vinyl-transform')
@@ -81,14 +80,16 @@ var jsBuild = new PromiseTask()
                 )
                 .then(function() { // then run everything through browserify
                     var bundledStream = browserify(fileIn)
-                        .bundle();
 
                     if (env.isProd()) { // and if prod, uglify
-                        bundledStream = bundledStream.pipe(uglifyStream());
+                        bundler.transform({
+                            global: true
+                        }, 'uglifyify');
                     }
 
                     return streamToPromise(
-                        bundledStream.pipe(vss(getJsOut(env)))
+                        bundler.bundle()
+                        .pipe(vss(getJsOut(env)))
                         .pipe(replaceENV(env))
                         .pipe(vFs.dest(env.curEnv()))
                     );
