@@ -36,9 +36,12 @@ var PromiseTask = ptr.PromiseTask
     , Environment = nh.Environment
     , lazy = nh.lazyExtensions;
 
+var log = new(nh.LogProvider)()
+    .EnvInst(new Environment().HardCoded('dev'))
+    .getLogger();
+
 var srcHtml = 'src/client/index.html';
 var ENVIRONMENT_VARIABLE_DEPENDENCIES = [];
-var addRoutes = require('../src/server/routes');
 var lrOptions = {
     host: 'localhost'
     , port: 35729
@@ -61,10 +64,10 @@ var allTasks = new PromiseTaskContainer()
 var clean = new PromiseTask()
     .id('clean')
     .task(function() {
-        var env = new Environment({
-            hardCoded: this.globalArgs().env
-        });
-        var envPath = path.join(process.cwd(), env.curEnv());
+        var envInst = new Environment()
+            .HardCoded(this.globalArgs().env);
+
+        var envPath = path.join(process.cwd(), envInst.curEnv());
         return bRimraf(envPath)
             .then(function() {
                 return bMkdirp(envPath);
@@ -90,23 +93,29 @@ var build = new PromiseTask()
     .id('build')
     .dependencies(cleanThenBuildAll)
     .task(function() {
-        var env = new Environment({
-            hardCoded: this.globalArgs().env
-        });
-        return streamToPromise(
-            vFs.src(srcHtml)
-            .pipe(injector(env))
-            .pipe(vFs.dest(env.curEnv()))
-        );
+        var envInst = new Environment()
+            .HardCoded(this.globalArgs().env);
+
+        return bPromise.resolve([
+            streamToPromise(
+                vFs.src(srcHtml)
+                .pipe(injector(envInst))
+                .pipe(vFs.dest(envInst.curEnv())))
+            , streamToPromise(
+                vFs.src(srcFavicon)
+                .pipe(vFs.dest(envInst.curEnv())))
+
+        ]);
     });
 
 var htmlWatch = new PromiseTask()
     .id('htmlWatch')
     .task(function() {
         var self = this;
-        var env = new Environment({
-            hardCoded: self.globalArgs().env
-        });
+
+        var envInst = new Environment()
+            .HardCoded(self.globalArgs().env);
+
         var watcher = vFs.watch(srcHtml);
         watcher.on('change', function(fpath) {
             try {
@@ -117,11 +126,11 @@ var htmlWatch = new PromiseTask()
                         http.get(lrOptions);
                     })
                     .catch(function(err) {
-                        console.log('%j', err);
+                        log.error(JSON.stringify(err, null, 4));
                     });
             } catch (e) {
-                console.log('error happened while building after change communicating to lr');
-                console.log('%j', e);
+                log.error('error happened while building after change communicating to lr');
+                log.error(JSON.stringify(e, null, 4));
             }
         });
     });
@@ -141,30 +150,26 @@ var watchAll = new PromiseTask()
     var startServer = new PromiseTask()
         .id('startServer')
         .task(function() {
-            var env = new Environment({
-                hardCoded: this.globalArgs().env
-            });
+            var envInst = new Environment()
+                .HardCoded(this.globalArgs().env);
+
             checkEnvVars();
 
             var app = express();
             app.use(compression());
 
-            app.use(express.static(path.join(env.curEnv())));
-
-            addRoutes(app, env.curEnv(), process.cwd());
+            app.use(express.static(path.join(envInst.curEnv())));
+            addRoutes(app, envInst, process.cwd());
 
             var port = process.env.PORT || 5000;
             app.listen(port);
-            console.log("" + env.curEnv() + " server listening on port " + port);
+            log.info(envInst.curEnv() + " server listening on port " + port);
         });
 
     var buildThenStartServer = new PromiseTask()
         .id('buildThenStartServer')
         .task(function() {
             var self = this;
-            var env = new Environment({
-                hardCoded: this.globalArgs().env
-            });
 
             return build
                 .globalArgs(self.globalArgs())
@@ -197,9 +202,9 @@ function injector(env) {
         var jsInject = "<!-- inject:js -->";
         var endInject = "<!-- endinject -->";
 
-        var indexCssRel = env.isProd()
-            ? "css/index.min.css"
-            : "css/index.css";
+        var indexCssRel = env.isDev()
+            ? "css/index.css"
+            : "css/index.min.css";
 
         var indexJsRel = env.isProd()
             ? "index.min.js"
@@ -223,7 +228,7 @@ function injector(env) {
 }
 
 function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return string.replace(/[.*+?^()|[\]\\]/g, "\\$&");
 }
 
 function checkEnvVars() {

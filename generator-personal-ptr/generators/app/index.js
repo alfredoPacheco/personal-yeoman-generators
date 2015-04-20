@@ -57,7 +57,7 @@ module.exports = generators.Base.extend({
             , 'through2'
             , 'rimraf'
             , 'tiny-lr'
-            , 'uglifyify'
+            , 'minifyify'
             , 'vinyl-fs'
             , 'vinyl-source-stream'
             , 'vinyl-transform'

@@ -29,6 +29,10 @@ var PromiseTask = ptr.PromiseTask
     , PromiseTaskContainer = ptr.PromiseTaskContainer
     , Environment = nh.Environment;
 
+var log = new(nh.LogProvider)()
+    .EnvInst(new Environment().HardCoded('dev'))
+    .getLogger();
+
 var srcScss = 'src/client/assets/scss';
 
 
@@ -39,10 +43,10 @@ var srcScss = 'src/client/assets/scss';
 var scssClean = new PromiseTask()
     .id('scssClean')
     .task(function() {
-        var env = new Environment({
-            hardCoded: this.globalArgs().env
-        });
-        var cssPath = path.join(process.cwd(), env.curEnv(), CSS_DIR);
+        var envInst = new Environment()
+            .HardCoded(this.globalArgs().env);
+
+        var cssPath = path.join(process.cwd(), envInst.curEnv(), CSS_DIR);
 
         return bRimraf(cssPath)
             .then(function() {
@@ -56,38 +60,37 @@ var scssBuild = new PromiseTask()
     .task(function() {
         var res;
 
-        var env = new Environment({
-            hardCoded: this.globalArgs().env
-        });
+        var envInst = new Environment()
+            .HardCoded(this.globalArgs().env);
 
-        var cssOut = (env.isDev())
+        var cssOut = (envInst.isDev())
             ? 'index.css'
             : 'index.min.css';
 
-        var destCss = path.join(env.curEnv(), CSS_DIR, cssOut);
+        var destCss = path.join(envInst.curEnv(), CSS_DIR, cssOut);
 
         var nodeSassOpts = {
             file: path.join(srcScss, 'index.scss')
         };
 
-        if (!env.isProd()) {
+        if (!envInst.isProd()) {
             nodeSassOpts.sourceMap = true;
             nodeSassOpts.outFile = cssOut;
         }
 
-        if (env.isProd()) {
+        if (envInst.isProd()) {
             nodeSassOpts.outputStyle = 'compressed';
         }
 
         var bCompileAndCopySass = bSass.pRender(nodeSassOpts)
             .then(function(successObj) {
-                return bMkdirp(path.join(env.curEnv(), CSS_DIR))
+                return bMkdirp(path.join(envInst.curEnv(), CSS_DIR))
                     .thenReturn(successObj);
             })
             .then(function(successObj) {
                 var pRes;
 
-                if (env.isProd()) {
+                if (envInst.isProd()) {
                     pRes = bFs.writeFileAsync(destCss, successObj.css);
                 } else {
                     pRes = bPromise.join(
@@ -99,12 +102,12 @@ var scssBuild = new PromiseTask()
                 return pRes;
             });
 
-        if (env.isProd()) {
+        if (envInst.isProd()) {
             res = bCompileAndCopySass;
         } else {
             res = bPromise.join(
                 bCompileAndCopySass
-                , bNcp(srcScss, path.join(env.curEnv(), CSS_DIR))
+                , bNcp(srcScss, path.join(envInst.curEnv(), CSS_DIR))
             );
         }
 
@@ -114,18 +117,18 @@ var scssBuild = new PromiseTask()
 var scssWatch = new PromiseTask()
     .id('scssWatch')
     .task(function() {
-        var env = new Environment({
-            hardCoded: this.globalArgs().env
-        });
+        var envInst = new Environment()
+            .HardCoded(this.globalArgs().env);
+
         var watcher = vFs.watch(path.join(srcScss, "**/*"));
-        var cssOut = (env.isDev())
+        var cssOut = (envInst.isDev())
             ? 'index.css'
             : 'index.min.css';
 
-        var destCss = path.join(env.curEnv(), CSS_DIR, cssOut);
+        var destCss = path.join(envInst.curEnv(), CSS_DIR, cssOut);
         watcher.on('change', function(fpath) {
             scssBuild.globalArgs({
-                    env: env.curEnv()
+                    env: envInst.curEnv()
                 })
                 .run()
                 .then(function() {
