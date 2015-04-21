@@ -28,6 +28,13 @@ var jsLibs = {
     , perfectScrollbar: 'perfect-scrollbar'
 };
 
+var jsLibsInstall = {
+    fancybox: 'fancybox'
+    , buddySystem: 'buddy-system'
+    , hoverIntent: 'hoverintent-jqplugin'
+    , perfectScrollbar: 'git://github.com/noraesae/perfect-scrollbar.git'
+};
+
 
 //------//
 // Main //
@@ -79,7 +86,7 @@ module.exports = generators.Base.extend({
                                 || (answers[k] === 'y');
                         })
                         .map(function(k) {
-                            return jsLibs[k];
+                            return jsLibsInstall[k];
                         })
                         .toArray();
 

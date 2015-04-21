@@ -90,6 +90,14 @@ module.exports = generators.Base.extend({
                 self.options.includeFonts = self.options.includeFonts || (answers.includeFonts === "y");
                 self.options.includePerfectScrollbar = self.options.includePerfectScrollbar
                     || (answers.includePerfectScrollbar === "y");
+                    
+                if (self.options.includePerfectScrollbar) {
+					self.npmInstall([
+						'git://github.com/noraesae/perfect-scrollbar.git'
+					], {
+						'save': true
+					});
+				}
 
                 done();
             });
@@ -98,7 +106,7 @@ module.exports = generators.Base.extend({
         var self = this;
 
         var includeGlob = "**/*";
-        if (this.options.includePerfectScrollbar) {
+        if (!this.options.includePerfectScrollbar) {
             includeGlob += "!(_perfect-scrollbar-override.scss)";
         }
 
