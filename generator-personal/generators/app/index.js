@@ -28,7 +28,7 @@ module.exports = generators.Base.extend({
         generators.Base.apply(this, arguments);
 
         if (arguments[0].length > 1) {
-            throw new Error("generator-personal-base only expects up to one parameter (project name).  The following were given: " + arguments[0]);
+            throw new Error("generator-personal only expects up to one parameter (project name).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
             type: String
@@ -86,9 +86,9 @@ module.exports = generators.Base.extend({
                     , 'message': 'Angular module name (camel-casing with namespacing)'
                     , 'type': 'input'
                     , 'validate': function(input) {
-                            return (input === '' || (input.match(/^[a-z][a-zA-Z\.]*$/)))
+                            return (input === '' || (input.match(/^[a-z][a-zA-Z0-9\.]*$/)))
                                 ? true
-                                : "Module name must be empty or match the following regex: /^[a-z][a-zA-Z\.]*/";
+                                : "Module name must be empty or match the following regex: /^[a-z][a-zA-Z0-9\.]*/";
                         }
                     , 'default': function(answers) {
                             return camelcase(self.projectName || answers.projectName);
@@ -185,9 +185,6 @@ module.exports = generators.Base.extend({
                         , includeHoverIntent: self.options.includeHoverIntent
                     }
                 });
-                self.composeWith('personal-base', {
-                    args: argsArray
-                });
                 self.composeWith('personal-express', {
                     args: argsArray
                 });
@@ -251,7 +248,7 @@ module.exports = generators.Base.extend({
                     self.composeWith('personal-postgres', {
                         args: argsArray
                         , options: {
-                            dbName: self.projectName.replace(/-/g, '_');
+                            dbName: self.projectName.replace(/-/g, '_')
                         }
                     });
                 }

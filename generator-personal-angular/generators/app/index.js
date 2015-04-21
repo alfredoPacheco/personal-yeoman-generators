@@ -6,12 +6,9 @@
 //---------//
 
 var generators = require('yeoman-generator')
-    , bFs = require('fs-bluebird')
     , bPromise = require('bluebird')
     , pgc = require('personal-generator-common')
-    , nh = require('node-helpers')
     , bInquirer = require('bluebird-inquirer')
-    , l = require('lambda-js')
     , path = require('path');
 
 
@@ -79,8 +76,8 @@ module.exports = generators.Base.extend({
                     , 'message': 'Angular module name (camel-casing with namespacing)'
                     , 'type': 'input'
                     , 'validate': function(input) {
-                            return (!input.match(/^[a-z][a-zA-Z\.]*$/))
-                                ? "Module name must match the following regex: /[a-z][a-zA-Z\.]*/"
+                            return (!input.match(/^[a-z][a-zA-Z0-9\.]*$/))
+                                ? "Module name must match the following regex: /[a-z][a-zA-Z0-9\.]*/"
                                 : true;
                         }
                     , 'when': function() {

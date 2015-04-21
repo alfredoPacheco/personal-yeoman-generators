@@ -62,7 +62,7 @@ module.exports = generators.Base.extend({
             , 'vinyl-source-stream'
             , 'vinyl-transform'
             , 'git://github.com/olsonpm/node-helpers.git'
-            , 'git://github.com/olsonpm/node-sass-bluebird.git'
+            , 'git://github.com/sass/node-sass.git'
             , 'git://github.com/olsonpm/promise-task-runner.git'
         ], {
             'save': true
@@ -94,9 +94,9 @@ module.exports = generators.Base.extend({
                 , 'validate': function(input) {
                         if (input === '') return true;
 
-                        return (input === '' || input.match(/^[a-z][a-zA-Z\.]*$/))
+                        return (input === '' || input.match(/^[a-z][a-zA-Z0-9\.]*$/))
                             ? true
-                            : "Module name must match the following regex: /[a-z][a-zA-Z\.]*/";
+                            : "Module name must match the following regex: /[a-z][a-zA-Z0-9\.]*/";
                     }
                 , 'when': function() {
                     return typeof self.options.angularModuleName === 'undefined';

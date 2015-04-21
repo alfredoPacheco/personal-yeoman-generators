@@ -10,7 +10,7 @@ var ptr = require('promise-task-runner')
     , nh = require('node-helpers')
     , path = require('path')
     , vFs = require('vinyl-fs')
-    , bSass = require('node-sass-bluebird')
+    , bSass = bPromise.promisify(require('node-sass'))
     , http = require('http')
     , bFs = require('fs-bluebird')
     , streamToPromise = require('stream-to-promise')
@@ -82,7 +82,7 @@ var scssBuild = new PromiseTask()
             nodeSassOpts.outputStyle = 'compressed';
         }
 
-        var bCompileAndCopySass = bSass.pRender(nodeSassOpts)
+        var bCompileAndCopySass = bSass.render(nodeSassOpts)
             .then(function(successObj) {
                 return bMkdirp(path.join(envInst.curEnv(), CSS_DIR))
                     .thenReturn(successObj);

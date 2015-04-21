@@ -20,7 +20,7 @@
     "bluebird-inquirer": "0.0.1",
     "camelcase": "^1.0.2",
     "lambda-js": "^0.1.5",
-    "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
+    "personal-generator-common": "git://github.com/olsonpm/personal-generator-common",
     "yeoman-generator": "^0.18.9"
   }
 }
