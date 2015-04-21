@@ -41,7 +41,9 @@ var log = new(nh.LogProvider)()
     .getLogger();
 
 var srcHtml = 'src/client/index.html';
-var ENVIRONMENT_VARIABLE_DEPENDENCIES = [];
+var ENVIRONMENT_VARIABLE_DEPENDENCIES = [
+	"<%= projectNameEnv %>"
+];
 var lrOptions = {
     host: 'localhost'
     , port: 35729

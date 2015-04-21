@@ -93,7 +93,7 @@ module.exports = generators.Base.extend({
                 }
             };
             packageJson.environment = {
-				env_var_name: self.projectName.toUpperCase().replace(/-/g, '_') + "_NODE_ENV"
+				env_var_name: packageJson.name.toUpperCase().replace(/-/g, '_') + "_NODE_ENV"
 			};
         }
 
@@ -181,7 +181,6 @@ function npmInitPrompt(self) {
                     }
 
                     if (answers.projectName) {
-                        self.projectName = answers.projectName
 						self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                     }
 

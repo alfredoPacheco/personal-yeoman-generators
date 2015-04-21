@@ -129,6 +129,7 @@ module.exports = generators.Base.extend({
             , {
                 includeExpress: self.options.includeExpress
                 , angularModuleName: self.options.angularModuleName
+                , projectNameEnv: path.basename(self.destinationRoot()).toUpperCase().replace(/-/g, "_") + "_NODE_ENV"
             }
         );
     }
