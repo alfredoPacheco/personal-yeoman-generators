@@ -29,8 +29,7 @@ var npmArbitraryDefaults = {
 var EOL = require('os').EOL;
 var packageJson = {};
 
-var projectName
-    , pname;
+var pname;
 
 
 //------//
@@ -93,6 +92,9 @@ module.exports = generators.Base.extend({
                     exports: "angular.module('ngRoute').name"
                 }
             };
+            packageJson.environment = {
+				env_var_name: self.projectName.toUpperCase().replace(/-/g, '_') + "_NODE_ENV"
+			};
         }
 
         self.fs.write(
@@ -179,7 +181,8 @@ function npmInitPrompt(self) {
                     }
 
                     if (answers.projectName) {
-                        self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
+                        self.projectName = answers.projectName
+						self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                     }
 
                     self.options.includeAngular = self.options.includeAngular || answers.includeAngular;
