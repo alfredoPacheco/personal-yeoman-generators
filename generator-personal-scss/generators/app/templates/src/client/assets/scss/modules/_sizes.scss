@@ -1,0 +1,42 @@
+//-----------------//
+// Site-wide sizes //
+//-----------------//
+
+$max-size: 525;
+
+
+//------------//
+// font sizes //
+//------------//
+
+$tmp: 7;
+$font-lv1: #{$tmp}vmin;
+$m_font-lv1: round($max-size * 0.01 * $tmp) * 1px;
+
+$tmp: 5;
+$font-lv2: #{$tmp}vmin;
+$m_font-lv2: round($max-size * 0.01 * $tmp) * 1px;
+
+$tmp: 4.5;
+$font-lv3: #{$tmp}vmin;
+$m_font-lv3: round($max-size * 0.01 * $tmp) * 1px;
+
+$tmp: 4.1;
+$font-lv4: #{$tmp}vmin;
+$m_font-lv4: round($max-size * 0.01 * $tmp) * 1px;
+
+$tmp: 3.8;
+$font-lv5: #{$tmp}vmin;
+$m_font-lv5: round($max-size * 0.01 * $tmp) * 1px;
+
+$tmp: 3.5;
+$font-lv6: #{$tmp}vmin;
+$m_font-lv6: round($max-size * 0.01 * $tmp) * 1px;
+
+$tmp: 3.2;
+$font-lv7: #{$tmp}vmin;
+$m_font-lv7: round($max-size * 0.01 * $tmp) * 1px;
+
+$tmp: 3;
+$font-lv8: #{$tmp}vmin;
+$m_font-lv8: round($max-size * 0.01 * $tmp) * 1px;

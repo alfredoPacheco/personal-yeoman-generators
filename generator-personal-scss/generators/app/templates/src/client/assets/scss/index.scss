@@ -9,10 +9,11 @@
 // These relative paths will screw up the source maps, but I've decided
 //   that's better than than having to copy the files locally every time the library updates
 @import '../../../../node_modules/normalize.scss/normalize.scss';
-<% if (includePerfectScrollbar) { %>@import '../../../../node_modules/perfect-scrollbar/src/css/perfect-scrollbar';
+<% if (includePerfectScrollbar) { %>@import '../../../../node_modules/perfect-scrollbar/src/css/main';
 @import 'partials/perfect-scrollbar-overrides';<% } %>
 
 
 /* Now partials */
 <% if (includeFonts) { %>@import 'partials/fonts';<% } %>
+@import 'partials/defaults';
 @import 'partials/base';

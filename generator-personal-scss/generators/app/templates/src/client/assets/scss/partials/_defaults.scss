@@ -1,0 +1,58 @@
+//-----------------------//
+// Set all to border-box //
+//-----------------------//
+
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+}
+
+//--------------------------------------//
+// Get rid of dotted active link border //
+//--------------------------------------//
+
+:focus {
+    outline:0; /*removes the dotted border*/
+}
+input[type="text"] {
+	border: none;
+	padding: 0;
+}
+
+
+//----------//
+// Clearfix //
+//----------//
+
+.cf:before,
+.cf:after {
+    content: " "; /* 1 */
+    display: table; /* 2 */
+}
+
+.cf:after {
+    clear: both;
+}
+
+
+//---------------//
+// Reset margins //
+//---------------//
+
+h1, h2, h3, h4, h5, h6, input[type="text"], p, ul, ol, dl, dt, dd{
+	margin: 0;
+}
+
+
+//---------------------------//
+// Reset Webkit Link Styling //
+//---------------------------//
+
+a:-webkit-any-link{
+  text-decoration: none !important;
+  color: $default-link-color;
+}
