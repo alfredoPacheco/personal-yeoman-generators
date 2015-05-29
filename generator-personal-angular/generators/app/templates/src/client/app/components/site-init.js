@@ -1,34 +1,46 @@
 'use strict';
 
+var $ = require('jquery');
+
 <% if (includeBuddySystem || includeHoverIntent) { %>
-    // generated requires (from angular generator)
-    <% if (includeBuddySystem) { %>
+    // generated requires (from angular generator) <%
+    if (includeBuddySystem) { %>
         var initBuddySystem = require('buddy-system'); <%
-    } %>
-    <% if (includeHoverIntent) { %>
+    }
+    if (includeHoverIntent) { %>
         var initHoverIntent = require('hoverintent-jqplugin'); <%
     } %>
     // end of generated requires
     <%
 } %>
 
-function initSite($, $scope, log) { <% if (includeBuddySystem) { %>
+function initSite($scope, log) { <% if (includeBuddySystem) { %>
         initBuddySystem($); <%
-    } %>
-    <% if (includeBuddySystem) { %>
+    }
+    if (includeBuddySystem) { %>
         initHoverIntent($); <%
     } %>
 
+    // clean html whitespace jquery plugin as found here:
+    //   http://stackoverflow.com/questions/1539367/remove-whitespace-and-line-breaks-between-html-elements-using-jquery
+    $.fn.cleanWhitespace = function() {
+        this.contents().filter(
+                function() {
+                    return (this.nodeType == 3 && !/\S/.test(this.nodeValue));
+                }
+            )
+            .remove();
+        return this;
+    }
+
     $scope.$on('$viewContentLoaded', function() {
-        runPerViewLoad($, log);
+        runPerViewLoad(log);
     });
 }
 
 // This gets rid of all hover styles
-function runPerViewLoad($, log) {
-    log.debug('page/view loaded!');
-
-    <% if (includeBuddySystem) { %>
+function runPerViewLoad(log) {
+    log.debug('page/view loaded!'); <% if (includeBuddySystem) { %>
         // budySystem is a plugin that removes possibility of single words at the end of a paragraph
         //  on the last line.
         var res = $('p').buddySystem(); <%

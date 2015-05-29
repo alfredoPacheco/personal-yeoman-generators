@@ -90,7 +90,7 @@ Routes.ValidateEnv = function ValidateEnv(input_, throwErr_) {
     if (typeof input_ !== 'string' && !Utils.instance_of(input_, Environment)) {
         msg = 'Invalid Argument: <Routes>.env expects eiter an Environment object or an environment string.';
     } else if (typeof input_ === 'string') {
-        msg = Environment.validateEnv(input_);
+        msg = Environment.ValidateEnv(input_);
     }
 
     if (throwErr_ && msg) {
