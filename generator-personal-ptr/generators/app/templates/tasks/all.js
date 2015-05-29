@@ -40,6 +40,7 @@ var log = new(nh.LogProvider)()
     .EnvInst(new Environment().HardCoded('dev'))
     .getLogger();
 
+var srcFavicon = 'favicon.png';
 var srcHtml = 'src/client/index.html';
 var ENVIRONMENT_VARIABLE_DEPENDENCIES = [
 	"<%= projectNameEnv %>"
