@@ -9,7 +9,10 @@ var generators = require('yeoman-generator')
     , bPromise = require('bluebird')
     , pgc = require('personal-generator-common')
     , bInquirer = require('bluebird-inquirer')
-    , path = require('path');
+    , path = require('path')
+    , toBool = require('boolean')
+    , through2 = require('through2')
+    , jsBeautify = require('js-beautify').js_beautify;
 
 
 //------//
@@ -17,7 +20,9 @@ var generators = require('yeoman-generator')
 //------//
 
 var bPrompt = bPromise.promisify(generators.Base.prototype.prompt);
-
+var includeBuddySystemOpt
+    , includeHoverIntentOpt
+    , angularModuleNameOpt;
 
 //------//
 // Main //
@@ -28,22 +33,25 @@ module.exports = generators.Base.extend({
         generators.Base.apply(this, arguments);
 
         this.argument('projectName', {
-            type: String
-            , required: false
+            required: false
         });
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
+        });
+
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
         this.option('angularModuleName', {
-            type: String
-            , required: false
-            , desc: "The angular module name (defaults to camelcase'd project name)"
+            desc: "The angular module name (defaults to camelcase'd project name)"
         });
-        this.option('includeBuddySystem', {
-            type: Boolean
-            , required: false
-        });
-        this.option('includeHoverIntent', {
-            type: Boolean
-            , required: false
-        });
+        this.option('includeBuddySystem');
+        this.option('includeHoverIntent');
 
         if (arguments[0].length > 2) {
             throw new Error("generator-personal-angular only expects up to two arguments (project name, angular module name).  The following were given: " + arguments[0]);
@@ -107,18 +115,18 @@ module.exports = generators.Base.extend({
                 if (answers.projectName) {
                     self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                 }
-                self.options.includeBuddySystem = self.options.includeBuddySystem || answers.includeBuddySystem;
-                self.options.includeHoverIntent = self.options.includeHoverIntent || answers.includeHoverIntent;
-                self.options.angularModuleName = self.options.angularModuleName || answers.angularModuleName;
+                includeBuddySystemOpt = toBool(self.options.includeBuddySystem) || (answers.includeBuddySystem === 'y');
+                includeHoverIntentOpt = toBool(self.options.includeHoverIntent) || (answers.includeHoverIntent === 'y');
+                angularModuleNameOpt = self.options.angularModuleName || answers.angularModuleName;
 
-                if (self.options.includeBuddySystem) {
+                if (includeBuddySystemOpt) {
                     self.npmInstall([
                         'buddy-system'
                     ], {
                         'save': true
                     });
                 }
-                if (self.options.includeHoverIntent) {
+                if (includeHoverIntentOpt) {
                     self.npmInstall([
                         'hoverintent-jqplugin'
                     ], {
@@ -132,13 +140,23 @@ module.exports = generators.Base.extend({
     'writing': function writing() {
         var self = this;
 
+        self.registerTransformStream(
+            through2.obj(function(file, enc, cb) {
+                if (path.extname(file.path) === '.js') {
+                    file.contents = new Buffer(jsBeautify(file.contents.toString()));
+                }
+                this.push(file);
+                cb();
+            })
+        );
+
         self.fs.copyTpl(
             self.templatePath("**/*")
             , self.destinationPath()
             , {
-                angularModuleName: self.options.angularModuleName
-                , includeBuddySystem: self.options.includeBuddySystem
-                , includeHoverIntent: self.options.includeHoverIntent
+                angularModuleName: angularModuleNameOpt
+                , includeBuddySystem: includeBuddySystemOpt
+                , includeHoverIntent: includeHoverIntentOpt
             }
         );
     }
