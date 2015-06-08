@@ -280,6 +280,7 @@ module.exports = generators.Base.extend({
                         args: argsArray
                         , options: defaultOptions.extend({
                             dbName: (self.projectNameArg || path.basename(self.destinationRoot())).replace(/-/g, '_')
+                            , includeHeroku: includeHerokuOpt
                         }).toObject()
                     });
                 }
