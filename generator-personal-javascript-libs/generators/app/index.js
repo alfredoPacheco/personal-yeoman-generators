@@ -11,7 +11,8 @@ var generators = require('yeoman-generator')
     , bPromise = require('bluebird')
     , bInquirer = require('bluebird-inquirer')
     , nh = require('node-helpers')
-    , l = require('lambda-js');
+    , l = require('lambda-js')
+    , toBool = require('boolean');
 
 
 //------//
@@ -35,6 +36,8 @@ var jsLibsInstall = {
     , perfectScrollbar: 'git://github.com/noraesae/perfect-scrollbar.git'
 };
 
+var includeAllOpt;
+
 
 //------//
 // Main //
@@ -50,20 +53,25 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-pjson only expects up to " + numParams + " arguments.  The following were given: " + arguments[0]);
         }
         self.argument('projectName', {
-            type: String, required: false
-        });
-        self.option('includeAll', {
-            type: Boolean
-        });
-        Object.keys(jsLibs).forEach(function(k) {
-            self.option(k, {
-                type: Boolean
-            });
+            required: false
         });
 
-        self.options.includeAll =
-            (typeof self.options.includeAll !== 'undefined' && self.options.includeAll)
-            || false;
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
+        });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
+        self.option('includeAll');
+        Object.keys(jsLibs).forEach(function(k) {
+            self.option(k);
+        });
+
+        includeAllOpt = toBool(self.options.includeAll);
     },
     'prompting': function prompting() {
         var self = this;
@@ -78,11 +86,11 @@ module.exports = generators.Base.extend({
                 if (answers.projectName) {
                     self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                 }
-                if (!self.options.includeAll) {
+                if (!includeAllOpt) {
                     var installList = lazy(jsLibs)
                         .keys()
                         .filter(function(k) {
-                            return self.options[k]
+                            return toBool(self.options[k])
                                 || (answers[k] === 'y');
                         })
                         .map(function(k) {

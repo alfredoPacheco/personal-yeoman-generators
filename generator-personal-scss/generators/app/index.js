@@ -11,7 +11,8 @@ var generators = require('yeoman-generator')
     , nh = require('node-helpers')
     , bInquirer = require('bluebird-inquirer')
     , path = require('path')
-    , l = require('lambda-js');
+    , l = require('lambda-js')
+    , toBool = require('boolean');
 
 
 //------//
@@ -21,6 +22,8 @@ var generators = require('yeoman-generator')
 var bPrompt = bPromise.promisify(generators.Base.prototype.prompt);
 var lazy = nh.lazyExtensions;
 var promptAnswers;
+var includeFontsOpt
+    , includePerfectScrollbarOpt;
 
 
 //------//
@@ -32,14 +35,21 @@ module.exports = generators.Base.extend({
         generators.Base.apply(this, arguments);
 
         this.argument('projectName', {
-            type: String, required: false
+            required: false
         });
-        this.option('includePerfectScrollbar', {
-            type: Boolean
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
         });
-        this.option('includeFonts', {
-            type: Boolean
-        });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
+        this.option('includePerfectScrollbar');
+        this.option('includeFonts');
 
         if (arguments[0].length > 2) {
             throw new Error("generator-personal-scss only expects up to two arguments (project name, include perfect scrollbar).  The following were given: " + arguments[0]);
@@ -87,17 +97,16 @@ module.exports = generators.Base.extend({
                     self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                 }
 
-                self.options.includeFonts = self.options.includeFonts || (answers.includeFonts === "y");
-                self.options.includePerfectScrollbar = self.options.includePerfectScrollbar
-                    || (answers.includePerfectScrollbar === "y");
-                    
-                if (self.options.includePerfectScrollbar) {
-					self.npmInstall([
-						'git://github.com/noraesae/perfect-scrollbar.git'
-					], {
-						'save': true
-					});
-				}
+                includeFontsOpt = toBool(self.options.includeFonts) || (answers.includeFonts === 'y');
+                includePerfectScrollbarOpt = toBool(self.options.includePerfectScrollbar) || (answers.includePerfectScrollbar === 'y');
+
+                if (includePerfectScrollbarOpt) {
+                    self.npmInstall([
+                        'git://github.com/noraesae/perfect-scrollbar.git'
+                    ], {
+                        'save': true
+                    });
+                }
 
                 done();
             });
@@ -114,8 +123,8 @@ module.exports = generators.Base.extend({
             self.templatePath(includeGlob)
             , self.destinationPath()
             , {
-                includePerfectScrollbar: self.options.includePerfectScrollbar
-                , includeFonts: self.options.includeFonts
+                includePerfectScrollbar: includePerfectScrollbarOpt
+                , includeFonts: includeFontsOpt
             }
         );
     }

@@ -49,12 +49,21 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-fonts only expects up to two parameters (project name, fonts scss path).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
-            type: String
-            , required: false
+            required: false
         });
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
+        });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
         this.argument('assetsPath', {
-            type: String
-            , required: false
+            required: false
         });
 
         if (arguments[0].length > 2) {

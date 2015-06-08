@@ -12,3 +12,5 @@ for var in "${genArray[@]}"; do
 		npm install -g ./ &
 	popd
 done
+
+wait

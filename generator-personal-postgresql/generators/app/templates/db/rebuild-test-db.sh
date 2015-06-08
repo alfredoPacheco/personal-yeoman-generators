@@ -11,15 +11,15 @@ fi
 ms1=$(date '+%s%2N')
 
 psqlConnect="-h /run/postgresql/ -d <%= dbName %>"
-connectToTest="-h /run/postgresql/ -d <%= dbName %>_test"
-psql zz${psqlConnect} -c "drop database <%= dbName %>_test"
+connectToDb="-h /run/postgresql/ -d <%= dbName %>_test"
+psql ${psqlConnect} -c "drop database <%= dbName %>_test"
 psql ${psqlConnect} -c "create database <%= dbName %>_test"
 						
 
 ./generate-db-schema.sh
 
-psql ${connectToTest} -f ./db-schema.out
-psql ${connectToTest} -c "\
+psql ${connectToDb} -1 -f ./db-schema.out
+psql ${connectToDb} -1 -c "\
 	grant select, insert, update, delete on all tables in schema public to <%= dbName %>_test; \
 	grant select, update on all sequences in schema public to <%= dbName %>_test; \
 	revoke all on all tables in schema public from <%= dbName %>; \
@@ -33,7 +33,7 @@ psql ${connectToTest} -c "\
 # Insert test data
 if [ -f ./test-data/insert-all-test-data.sh ]; then
 	printf "inserting all test data\n"
-	./test-data/insert-all-test-data.sh
+	./test-data/insert-all-test-data.sh "<%= dbName %>_test"
 fi
 
 ms2=$(date '+%s%2N')

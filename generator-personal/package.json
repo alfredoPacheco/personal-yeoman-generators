@@ -20,7 +20,20 @@
     "bluebird-inquirer": "0.0.1",
     "camelcase": "^1.0.2",
     "lambda-js": "^0.1.5",
-    "personal-generator-common": "git://github.com/olsonpm/personal-generator-common",
+    "node-helpers": "olsonpm/node-helpers",
+    "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
     "yeoman-generator": "^0.18.9"
+  },
+  "peerDependencies": {
+    "generator-personal-angular": "file:../generator-personal-angular/",
+    "generator-personal-express": "file:../generator-personal-express/",
+    "generator-personal-fonts": "file:../generator-personal-fonts/",
+    "generator-personal-git": "file:../generator-personal-git/",
+    "generator-personal-heroku": "file:../generator-personal-heroku/",
+    "generator-personal-javascript-libs": "file:../generator-personal-javascript-libs/",
+    "generator-personal-pjson": "file:../generator-personal-pjson/",
+    "generator-personal-postgresql": "file:../generator-personal-postgresql/",
+    "generator-personal-ptr": "file:../generator-personal-ptr/",
+    "generator-personal-scss": "file:../generator-personal-scss/"
   }
 }

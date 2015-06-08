@@ -10,7 +10,10 @@ var generators = require('yeoman-generator')
     , path = require('path')
     , bPromise = require('bluebird')
     , bInquirer = require('bluebird-inquirer')
-    , l = require('lambda-js');
+    , l = require('lambda-js')
+    , toBool = require('boolean')
+    , through2 = require('through2')
+    , jsBeautify = require('js-beautify').js_beautify;
 
 
 //------//
@@ -18,6 +21,8 @@ var generators = require('yeoman-generator')
 //------//
 
 var TASKS_DIR_DEFAULT = 'tasks';
+var includeExpressOpt
+    , angularModuleNameOpt;
 
 
 //------//
@@ -31,21 +36,27 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-ptr only expects up to three arguments (project name, task dir).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
-            type: String, required: false
+            required: false
         });
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
+        });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
         this.argument('taskDir', {
-            type: String, required: false
+            required: false
         });
-        this.option('includeExpress', {
-            type: Boolean
-            , required: false
-        });
-        this.option('angularModuleName', {
-            type: String
-            , required: false
-        });
+        this.option('includeExpress');
+        this.option('angularModuleName');
         this.taskDir = this.taskDir || TASKS_DIR_DEFAULT;
 
+        /*
         this.npmInstall([
             'bluebird'
             , 'browserify'
@@ -67,6 +78,7 @@ module.exports = generators.Base.extend({
         ], {
             'save': true
         });
+        */
     },
     'prompting': function prompting() {
         var self = this;
@@ -106,8 +118,8 @@ module.exports = generators.Base.extend({
             if (answers.projectName) {
                 self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
             }
-            self.options.includeExpress = self.options.includeExpress || answers.includeExpress;
-            self.options.angularModuleName = self.options.angularModuleName || answers.angularModuleName;
+            includeExpressOpt = toBool(self.options.includeExpress) || (answers.includeExpress === 'y');
+            angularModuleNameOpt = self.options.angularModuleName || answers.angularModuleName;
 
             if (self.options.includeExpress === 'y') {
                 self.npmInstall([
@@ -122,6 +134,16 @@ module.exports = generators.Base.extend({
     },
     'writing': function writing() {
         var self = this;
+
+        self.registerTransformStream(
+            through2.obj(function(file, enc, cb) {
+                if (path.extname(file.path) === '.js') {
+                    file.contents = new Buffer(jsBeautify(file.contents.toString()));
+                }
+                this.push(file);
+                cb();
+            })
+        );
 
         self.fs.copyTpl(
             self.templatePath("**/*")

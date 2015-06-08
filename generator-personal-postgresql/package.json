@@ -2,7 +2,7 @@
   "name": "generator-personal-postgresql",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "generators/app/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,7 +19,11 @@
   "dependencies": {
     "bluebird": "^2.9.9",
     "bluebird-inquirer": "0.0.1",
+    "boolean": "^0.1.0",
+    "fs-bluebird": "^0.1.3",
+    "node-helpers": "olsonpm/node-helpers",
     "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
+    "touch": "0.0.3",
     "yeoman-generator": "^0.18.9"
   }
 }

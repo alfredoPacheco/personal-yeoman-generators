@@ -10,7 +10,15 @@ var generators = require('yeoman-generator')
     , pgc = require('personal-generator-common')
     , https = require('https')
     , sys = require('sys')
-    , exec = require('child_process').exec;
+    , exec = require('child_process').exec
+    , toBool = require('boolean');
+
+
+//------//
+// Init //
+//------//
+
+var herokuAppNameOpt;
 
 
 //------//
@@ -24,13 +32,20 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-pjson only expects up to one parameter (project name).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
-            type: String
-            , required: false
+            required: false
         });
-        this.option('herokuAppName', {
-            type: String
-            , required: false
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
         });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
+        this.option('herokuAppName');
 
         if (!process.env.HEROKU_API_TOKEN) {
             throw new Error("generator-personal-heroku requires the HEROKU_API_TOKEN environment variable to be set");
@@ -51,7 +66,7 @@ module.exports = generators.Base.extend({
                     , 'message': 'Name of the heroku app?'
                     , 'type': 'input'
                     , 'default': function(answers) {
-                            return self.projectName || answers.projectName;
+                            return self.projectNameArg || answers.projectName || path.basename(self.destinationRoot());
                         }
                     , 'when': function() {
                         return typeof self.options.herokuAppName === 'undefined';
@@ -59,7 +74,7 @@ module.exports = generators.Base.extend({
                 }
             ])
             .then(function(answers) {
-                self.options.herokuAppName = self.options.herokuAppName || answers.herokuAppName;
+                herokuAppNameOpt = self.options.herokuAppName || answers.herokuAppName;
                 done();
             });
     },
@@ -67,12 +82,12 @@ module.exports = generators.Base.extend({
         var self = this;
         var done = self.async();
 
-        exec("git remote add heroku-prod git@heroku.com:" + self.options.herokuAppName + ".git", {
+        exec("git remote add heroku-prod git@heroku.com:" + herokuAppNameOpt + ".git", {
             cwd: self.destinationRoot()
         }, sysPrint);
 
         var postData = JSON.stringify({
-            name: self.options.herokuAppName
+            name: herokuAppNameOpt
         });
 
         var options = {

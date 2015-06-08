@@ -2,7 +2,7 @@
   "name": "generator-personal-javascript-libs",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "generators/app/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,6 +19,7 @@
   "dependencies": {
     "bluebird": "^2.9.9",
     "bluebird-inquirer": "0.0.1",
+    "boolean": "^0.1.0",
     "lambda-js": "^0.1.5",
     "node-helpers": "git://github.com/olsonpm/node-helpers.git",
     "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",

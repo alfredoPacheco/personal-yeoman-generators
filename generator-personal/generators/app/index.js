@@ -9,7 +9,9 @@ var generators = require('yeoman-generator')
     , bInquirer = require('bluebird-inquirer')
     , l = require('lambda-js')
     , path = require('path')
-    , camelcase = require('camelcase');
+    , camelcase = require('camelcase')
+    , lazy = require('node-helpers').lazyExtensions
+    , toBool = require('boolean');
 
 
 //------//
@@ -17,6 +19,7 @@ var generators = require('yeoman-generator')
 //------//
 
 var argsArray;
+require('events').EventEmitter.defaultMaxListeners = 20;
 
 
 //------//
@@ -31,44 +34,51 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal only expects up to one parameter (project name).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
-            type: String
-            , required: false
+            required: false
         });
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
+        });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        } else if (this.projectName) {
+            this.projectNameArg = this.projectName;
+        }
+
         this.option('angularModuleName', {
-            type: String
-            , required: false
-            , desc: "The angular module name"
+            desc: "The angular module name"
         });
         this.option('includeExpress', {
-            required: false
-            , desc: 'Includes the express framework'
+            desc: 'Includes the express framework'
         });
         this.option('includePerfectScrollbar', {
-            required: false
-            , desc: 'Includes the perfect scrollbar jquery plugin'
+            desc: 'Includes the perfect scrollbar jquery plugin'
         });
         this.option('includeBuddySystem', {
-            required: false
-            , desc: 'Includes the buddy-system jquery plugin'
+            desc: 'Includes the buddy-system jquery plugin'
         });
         this.option('includeHoverIntent', {
-            required: false
-            , desc: 'Includes the hover-intent jquery plugin'
+            desc: 'Includes the hover-intent jquery plugin'
         });
         this.option('includeFonts', {
-            required: false
-            , desc: 'Composes with the fonts generator'
+            desc: 'Composes with the fonts generator'
         });
         this.option('includeGit', {
-            required: false
-            , desc: 'Creates a git repository'
+            desc: 'Creates a git repository'
         });
         this.option('includeHeroku', {
-            required: false
-            , desc: 'Creates a heroku app'
+            desc: 'Creates a heroku app'
         });
-        argsArray = (this.projectName)
-            ? [this.projectName]
+        this.option('includePostgresql', {
+            desc: 'Creates a postgresql database and database user with the same name as the project'
+        });
+
+        argsArray = (typeof this.projectNameArg !== 'undefined')
+            ? [this.projectNameArg]
             : [];
     },
     'prompting': function prompting() {
@@ -91,7 +101,7 @@ module.exports = generators.Base.extend({
                                 : "Module name must be empty or match the following regex: /^[a-z][a-zA-Z0-9\.]*/";
                         }
                     , 'default': function(answers) {
-                            return camelcase(self.projectName || answers.projectName);
+                            return camelcase(self.projectNameArg || answers.projectName || path.basename(self.destinationRoot()));
                         }
                     , 'when': function() {
                         return typeof self.options.angularModuleName === 'undefined';
@@ -159,97 +169,118 @@ module.exports = generators.Base.extend({
                     , 'when': function() {
                         return typeof self.options.includeHeroku === 'undefined';
                     }
+                }, {
+                    'name': 'includePostgresql'
+                    , 'message': 'Create a postgres database? (y/n)'
+                    , 'type': 'list'
+                    , 'choices': ['y', 'n']
+                    , 'default': 1
+                    , 'when': function() {
+                        return typeof self.options.includePostgresql === 'undefined';
+                    }
                 }
             ])
             .then(function(answers) {
+                if (typeof self.projectNameArg === 'undefined') {
+                    argsArray.push(answers.projectName);
+                }
                 if (answers.projectName) {
                     self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
-                    argsArray.push(answers.projectName);
-                    self.projectName = answers.projectName;
+                    self.projectNameArg = answers.projectName;
                 }
-                self.options.angularModuleName = self.options.angularModuleName || answers.angularModuleName;
-                self.options.includeExpress = self.options.includeExpress || answers.includeExpress;
-                self.options.includePerfectScrollbar = self.options.includePerfectScrollbar || answers.includePerfectScrollbar;
-                self.options.includeBuddySystem = self.options.includeBuddySystem || answers.includeBuddySystem;
-                self.options.includeHoverIntent = self.options.includeHoverIntent || answers.includeHoverIntent;
-                self.options.includeFonts = self.options.includeFonts || answers.includeFonts;
-                self.options.includeGit = self.options.includeGit || answers.includeGit;
-                self.options.includeHeroku = self.options.includeHeroku || answers.includeHeroku;
+                var angularModuleNameOpt = self.options.angularModuleName || answers.angularModuleName;
+                var includeExpressOpt = toBool(self.options.includeExpress) || (answers.includeExpress === 'y');
+                var includePerfectScrollbarOpt = toBool(self.options.includePerfectScrollbar) || (answers.includePerfectScrollbar === 'y');
+                var includeBuddySystemOpt = toBool(self.options.includeBuddySystem) || (answers.includeBuddySystem === 'y');
+                var includeHoverIntentOpt = toBool(self.options.includeHoverIntent) || (answers.includeHoverIntent === 'y');
+                var includeFontsOpt = toBool(self.options.includeFonts) || (answers.includeFonts === 'y');
+                var includeGitOpt = toBool(self.options.includeGit) || (answers.includeGit === 'y');
+                var includeHerokuOpt = toBool(self.options.includeHeroku) || (answers.includeHeroku === 'y');
+                var includePostgresqlOpt = toBool(self.options.includePostgresql) || (answers.includePostgresql === 'y');
+                var emptyProjectNameOpt = toBool(self.options.emptyProjectName);
 
+                var defaultOptions = lazy({});
+                if (emptyProjectNameOpt) {
+                    defaultOptions = defaultOptions.extend({
+                        emptyProjectName: emptyProjectNameOpt
+                    });
+                }
 
                 self.composeWith('personal-angular', {
                     args: argsArray
-                    , options: {
-                        angularModuleName: self.options.angularModuleName
-                        , includeBuddySystem: self.options.includeBuddySystem
-                        , includeHoverIntent: self.options.includeHoverIntent
-                    }
+                    , options: defaultOptions.extend({
+                        angularModuleName: angularModuleNameOpt
+                        , includeBuddySystem: includeBuddySystemOpt
+                        , includeHoverIntent: includeHoverIntentOpt
+                    }).toObject()
                 });
                 self.composeWith('personal-express', {
                     args: argsArray
+                    , options: defaultOptions.toObject()
                 });
-                if (self.options.includeFonts) {
+                if (includeFontsOpt) {
                     self.composeWith('personal-fonts', {
                         args: argsArray
+                        , options: defaultOptions.toObject()
                     });
                 }
 
                 self.composeWith('personal-javascript-libs', {
                     args: argsArray
-                    , options: {
-                        perfectScrollbar: self.options.includePerfectScrollbar
-                        , buddySystem: self.options.includeBuddySystem
-                        , hoverIntent: self.options.includeHoverIntent
-                    }
+                    , options: defaultOptions.extend({
+                        perfectScrollbar: includePerfectScrollbarOpt
+                        , buddySystem: includeBuddySystemOpt
+                        , hoverIntent: includeHoverIntentOpt
+                    }).toObject()
                 });
 
                 self.composeWith('personal-pjson', {
                     args: argsArray
-                    , options: {
-                        includeAngular: !!self.options.angularModuleName
-                    }
+                    , options: defaultOptions.extend({
+                        includeAngular: angularModuleNameOpt
+                    }).toObject()
                 });
 
                 self.composeWith('personal-ptr', {
                     args: argsArray
-                    , options: {
-                        includeExpress: self.options.includeExpress
-                        , angularModuleName: self.options.angularModuleName
-                    }
+                    , options: defaultOptions.extend({
+                        includeExpress: includeExpressOpt
+                        , angularModuleName: angularModuleNameOpt
+                    }).toObject()
                 });
 
                 self.composeWith('personal-scss', {
                     args: argsArray
-                    , options: {
-                        includePerfectScrollbar: self.options.includePerfectScrollbar
-                        , includeFonts: self.options.includeFonts
-                    }
+                    , options: defaultOptions.extend({
+                        includePerfectScrollbar: includePerfectScrollbarOpt
+                        , includeFonts: includeFontsOpt
+                    }).toObject()
                 });
 
-                if (self.options.includeGit) {
+                if (includeGitOpt) {
                     self.composeWith('personal-git', {
                         args: argsArray
-                        , options: {
-                            repoName: self.projectName
-                        }
+                        , options: defaultOptions.extend({
+                            repoName: self.projectNameArg || path.basename(self.destinationRoot())
+                        }).toObject()
                     });
                 }
 
-                if (self.options.includeHeroku) {
+                if (includeHerokuOpt) {
                     self.composeWith('personal-heroku', {
                         args: argsArray
-                        , options: {
-                            herokuAppName: self.projectName
-                        }
+                        , options: defaultOptions.extend({
+                            herokuAppName: self.projectNameArg || path.basename(self.destinationRoot())
+                        }).toObject()
                     });
                 }
 
-                if (self.options.includePostgres) {
-                    self.composeWith('personal-postgres', {
+                if (includePostgresqlOpt) {
+                    self.composeWith('personal-postgresql', {
                         args: argsArray
-                        , options: {
-                            dbName: self.projectName.replace(/-/g, '_')
-                        }
+                        , options: defaultOptions.extend({
+                            dbName: (self.projectNameArg || path.basename(self.destinationRoot())).replace(/-/g, '_')
+                        }).toObject()
                     });
                 }
 

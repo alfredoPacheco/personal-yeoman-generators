@@ -29,8 +29,18 @@ module.exports = generators.Base.extend({
         generators.Base.apply(this, arguments);
 
         this.argument('projectName', {
-            type: String, required: false
+            required: false
         });
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
+        });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
 
         if (arguments[0].length > 1) {
             throw new Error("generator-personal-express only expects up to one argument (project name).  The following were given: " + arguments[0]);

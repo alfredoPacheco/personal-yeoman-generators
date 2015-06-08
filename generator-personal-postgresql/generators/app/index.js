@@ -10,7 +10,22 @@ var generators = require('yeoman-generator')
     , bInquirer = require('bluebird-inquirer')
     , pgc = require('personal-generator-common')
     , sys = require('sys')
-    , bExec = bPromise.promisify(require('child_process').exec);
+    , bExec = bPromise.promisify(require('child_process').exec)
+    , lazy = require('node-helpers').lazyExtensions
+    , toBool = require('boolean')
+    , path = require('path')
+    , bFs = require('fs-bluebird')
+    , bTouch = bPromise.promisify(require('touch'));
+
+
+//------//
+// Init //
+//------//
+
+var dbNameOpt
+    , includeHerokuOpt
+    , dropExistingDatabaseOpt
+    , isExistingGitRepo;
 
 
 //------//
@@ -24,13 +39,22 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-pjson only expects up to one parameter (project name).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
-            type: String
-            , required: false
+            required: false
         });
-        this.option('dbName', {
-            type: String
-            , required: false
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
         });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
+        this.option('dbName');
+        this.option('includeHeroku');
+        this.option('dropExistingDatabase');
 
         if (!process.env.HEROKU_API_TOKEN) {
             throw new Error("generator-personal-heroku requires the HEROKU_API_TOKEN environment variable to be set");
@@ -38,7 +62,6 @@ module.exports = generators.Base.extend({
 
         this.npmInstall([
             'mocha'
-            , 'mocha-clean'
             , 'chai'
             , 'git://github.com/olsonpm/node-helpers.git'
         ], {
@@ -60,16 +83,66 @@ module.exports = generators.Base.extend({
                     , 'message': 'Name of the database?'
                     , 'type': 'input'
                     , 'default': function(answers) {
-                            var tmpName = self.projectName || answers.projectName;
-                            return tmpName.replace(/-/g, '_');
+                            var tmpName = self.projectNameArg || answers.projectName || path.basename(self.destinationRoot());
+                            return tmpName.toLowerCase().replace(/-/g, '_');
                         }
                     , 'when': function() {
                         return typeof self.options.dbName === 'undefined';
                     }
+                }, {
+                    'name': 'includeHeroku'
+                    , 'message': 'Is this a heroku app? (y/n)'
+                    , 'type': 'list'
+                    , 'choices': ['y', 'n']
+                    , 'default': 1
+                    , 'when': function() {
+                        return typeof self.options.includeHeroku === 'undefined';
+                    }
+                }, {
+                    'name': 'dropExistingDatabase'
+                    , 'message': function(answers) {
+                        return "Database name: '" + answers.dbName + "' already exists.  Delete it?";
+                    }, 'type': 'list'
+                    , 'choices': ['y', 'n']
+                    , 'default': 1
+                    , 'when': function(answers) {
+                        var done = this.async();
+                        var shouldPrompt = (typeof self.options.dropExistingDatabase === 'undefined');
+
+                        var bShouldPrompt = (shouldPrompt)
+                            ? bPromise.try(function() {
+                                var cmd = 'psql postgres -tAc "SELECT 1 FROM pg_database WHERE datistemplate = false '
+                                    + 'AND datname=' + "'" + answers.dbName + "'" + '" | grep 1';
+
+                                return bExec(cmd);
+                            })
+                            .catch(function(err) {
+                                if (err.code != 1) {
+                                    throw err;
+                                }
+                                return ["", ""];
+                            })
+                            .spread(function(stdoutBuf, stderrBuf) {
+                                if (stderrBuf) {
+                                    throw new Error(stderrBuf);
+                                }
+
+                                shouldPrompt = stdoutBuf.length > 0;
+                                return shouldPrompt;
+                            })
+                            : bPromise.resolve(shouldPrompt);
+
+                        return bShouldPrompt.then(function(shouldPrompt) {
+                            done(shouldPrompt);
+                        });
+                    }
                 }
             ])
             .then(function(answers) {
-                self.options.dbName = self.options.dbName || answers.dbName;
+                dbNameOpt = self.options.dbName || answers.dbName;
+                includeHerokuOpt = toBool(self.options.includeHeroku) || (answers.includeHeroku === 'y');
+                dropExistingDatabaseOpt = toBool(self.options.dropExistingDatabase) || (answers.dropExistingDatabase === 'y');
+                isExistingGitRepo = bFs.existsSync(path.join(self.destinationRoot(), '.git'));
                 done();
             });
     },
@@ -77,8 +150,70 @@ module.exports = generators.Base.extend({
         var self = this;
         var done = self.async();
 
+        var handleDb = bPromise.all([
+                createDbUserIfNotExists(dbNameOpt)
+                , createDbUserIfNotExists(dbNameOpt + '_test')
+            ])
+            .then(function() {
+                var bRes;
+                if (dropExistingDatabaseOpt) {
+                    bRes = bPromise.all(
+                        dropDb(dbNameOpt)
+                        , dropDb(dbNameOpt + '_test')
+                    );
+                }
+
+                return bRes;
+            })
+            .then(function() {
+                return bPromise.all([
+                    createDb(dbNameOpt)
+                    , createDb(dbNameOpt + '_test')
+                ]);
+            });
+
+        var gitignoreFile = path.join(self.destinationRoot(), '.gitignore');
+        var handleGit = (isExistingGitRepo)
+            ? bFs.readFileAsync(gitignoreFile)
+            .catch(function(err) {
+                var bRes;
+
+                if (err.code === 'ENOENT') {
+                    bRes = bTouch(gitignoreFile)
+                        .then(function() {
+                            return bFs.readFileAsync(gitignoreFile);
+                        });
+                } else {
+                    throw err;
+                }
+
+                return bRes;
+            })
+            .then(function(buf) {
+                var lazyLines = lazy(buf.toString().split("\n"));
+                var gitIgnoreBackups = 'db/data-backups';
+                var bRes = bPromise.resolve();
+
+                if (!lazyLines.has(gitIgnoreBackups)) {
+                    bRes = bRes.then(function() {
+                        return bFs.appendFileAsync(gitignoreFile, gitIgnoreBackups + "\n");
+                    });
+                }
+
+                return bRes;
+            })
+            : bPromise.resolve();
+
+        bPromise.all(
+            handleDb
+            , handleGit
+        ).then(function() {
+            writeTemplate();
+            done();
+        });
+
         function createDbUserIfNotExists(username) {
-            return bExec('psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname=' + username + '" | grep -q 1 || createuser ' + username);
+            return bExec('psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname=' + "'" + username + "'" + '" | grep -q 1 || createuser ' + username);
         }
 
         function createDb(dbName) {
@@ -86,39 +221,44 @@ module.exports = generators.Base.extend({
                     cwd: self.destinationRoot()
                 })
                 .then(function() {
-                    return bExec("psql -c \""
-                        + "alter default privileges in schema public grant select, insert, update, delete on tables to " + dbName
-                        + "; alter default privileges in schema public grant select, update on sequences to " + dbName + "\"", {
+                    return bExec("psql -d \"" + dbName + "\" -c \""
+                        + "alter default privileges in schema public grant select, insert, update, delete on tables to " + dbName + "\"", {
                             cwd: self.destinationRoot()
-                        })
+                        });
+
+                })
+                .then(function() {
+                    return bExec("psql -d \"" + dbName + "\" -c \""
+                        + "alter default privileges in schema public grant select, update on sequences to " + dbName + "\"", {
+                            cwd: self.destinationRoot()
+                        });
                 });
         }
 
+        function dropDb(dbName) {
+            return bExec("psql -c \"DROP DATABASE IF EXISTS " + dbName + "\"", {
+                cwd: self.destinationRoot()
+            });
+        }
+
         function writeTemplate() {
+            var options = lazy({
+                interpolate: /<%=([\s\S]+?)%>/g
+            });
+
+            if (!includeHerokuOpt) {
+                options.extend({
+                    ignore: "db/build-heroku-db.sh"
+                });
+            }
+
             self.fs.copyTpl(
                 self.templatePath("**/*")
                 , self.destinationPath()
                 , {
-                    dbName: self.options.dbName
-                }, {
-                    interpolate: /<%=([\s\S]+?)%>/g
-                }
+                    dbName: dbNameOpt
+                }, options.toObject()
             );
         }
-
-        bPromise.all([
-                createDbUserIfNotExists(self.options.dbName)
-                , createDbUserIfNotExists(self.options.dbName + '_test')
-            ])
-            .then(function() {
-                return bPromise.all([
-                    createDb(self.options.dbName)
-                    , createDb(self.options.dbName + '_test')
-                ]);
-            })
-            .then(function() {
-                writeTemplate();
-                done();
-            });
     }
 });

@@ -26,6 +26,8 @@ github.authenticate({
     token: process.env.GIT_API_TOKEN
 });
 
+var repoNameOpt;
+
 
 //------//
 // Main //
@@ -38,12 +40,20 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-pjson only expects up to one parameter (project name).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
-            type: String, required: false
+            required: false
         });
-        this.option('repoName', {
-            type: String
-            , required: false
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
         });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
+        this.option('repoName');
     },
     'prompting': function prompting() {
         var self = this;
@@ -60,7 +70,7 @@ module.exports = generators.Base.extend({
                     , 'message': 'Name of the repository?'
                     , 'type': 'input'
                     , 'default': function(answers) {
-                            return self.projectName || answers.projectName;
+                            return self.projectNameArg || answers.projectName || path.basename(self.destinationRoot());
                         }
                     , 'when': function() {
                         return typeof self.options.repoName === 'undefined';
@@ -68,10 +78,10 @@ module.exports = generators.Base.extend({
                 }
             ])
             .then(function(answers) {
-                self.options.repoName = self.options.repoName || answers.repoName;
+                repoNameOpt = self.options.repoName || answers.repoName;
 
                 github.repos.create({
-                    name: self.options.repoName
+                    name: repoNameOpt
                 }, done);
             });
     },
@@ -81,7 +91,7 @@ module.exports = generators.Base.extend({
         exec("git init", {
             cwd: self.destinationRoot()
         }, sysPrint);
-        exec("git remote add origin 'git@github.com:olsonpm/" + self.options.repoName + ".git'", {
+        exec("git remote add origin 'git@github.com:olsonpm/" + repoNameOpt + ".git'", {
             cwd: self.destinationRoot()
         }, sysPrint);
         self.fs.write('.gitignore', 'node_modules\nnpm-debug.log');

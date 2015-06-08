@@ -12,7 +12,8 @@ var generators = require('yeoman-generator')
     , bNpm = require('./bluebird-npm')
     , bRimraf = bPromise.promisify(require('rimraf'))
     , bInquirer = require('bluebird-inquirer')
-    , pgc = require('personal-generator-common');
+    , pgc = require('personal-generator-common')
+    , toBool = require('boolean');
 
 
 //------//
@@ -30,7 +31,7 @@ var EOL = require('os').EOL;
 var packageJson = {};
 
 var pname;
-
+var includeAngularOpt;
 
 //------//
 // Main //
@@ -43,12 +44,20 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-pjson only expects up to one parameter (project name).  The following were given: " + arguments[0]);
         }
         this.argument('projectName', {
-            type: String, required: false
+            required: false
         });
-        this.option('includeAngular', {
-            type: Boolean
-            , required: false
+
+        this.option('emptyProjectName', {
+            desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
+                + " via the command line"
         });
+        if (this.options.emptyProjectName === true && this.projectName) {
+            throw new Error("Invalid State: option emptyProjectName cannot be set while also passing in a projectName argument");
+        } else if (this.options.emptyProjectName) {
+            this.projectNameArg = "";
+        }
+
+        this.option('includeAngular');
     },
     'initializing': function initializing() {
         packageJson.browser = {
@@ -93,8 +102,8 @@ module.exports = generators.Base.extend({
                 }
             };
             packageJson.environment = {
-				env_var_name: packageJson.name.toUpperCase().replace(/-/g, '_') + "_NODE_ENV"
-			};
+                env_var_name: packageJson.name.toUpperCase().replace(/-/g, '_') + "_NODE_ENV"
+            };
         }
 
         self.fs.write(
@@ -181,11 +190,11 @@ function npmInitPrompt(self) {
                     }
 
                     if (answers.projectName) {
-						self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
+                        self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                     }
 
-                    self.options.includeAngular = self.options.includeAngular || answers.includeAngular;
-                    packageJson.name = self.projectName || answers.projectName;
+                    includeAngularOpt = toBool(self.options.includeAngular) || (answers.includeAngular === 'y');
+                    packageJson.name = self.projectNameArg || answers.projectName || path.basename(self.destinationRoot());
                 });
         });
 }
