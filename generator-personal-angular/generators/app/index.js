@@ -20,9 +20,12 @@ var generators = require('yeoman-generator')
 //------//
 
 var bPrompt = bPromise.promisify(generators.Base.prototype.prompt);
+
 var includeBuddySystemOpt
     , includeHoverIntentOpt
-    , angularModuleNameOpt;
+    , angularModuleNameOpt
+    , skipInstallOpt;
+
 
 //------//
 // Main //
@@ -35,6 +38,7 @@ module.exports = generators.Base.extend({
         this.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
@@ -57,17 +61,23 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-angular only expects up to two arguments (project name, angular module name).  The following were given: " + arguments[0]);
         }
 
-        this.npmInstall([
-            'angular'
-            , 'angular-route'
-            , 'browserify-shim'
-            , 'bunyan'
-            , 'jquery'
-            , 'lambda-js'
-            , 'git://github.com/olsonpm/node-helpers.git'
-        ], {
-            'save': true
-        });
+        this.option('skipInstall');
+        skipInstallOpt = toBool(this.options.skipInstall);
+        var shouldInstall = !skipInstallOpt;
+
+        if (shouldInstall) {
+            this.npmInstall([
+                'angular'
+                , 'angular-route'
+                , 'browserify-shim'
+                , 'bunyan'
+                , 'jquery'
+                , 'lambda-js'
+                , 'git://github.com/olsonpm/node-helpers.git'
+            ], {
+                'save': true
+            });
+        }
     },
     'prompting': function prompting() {
         var self = this;

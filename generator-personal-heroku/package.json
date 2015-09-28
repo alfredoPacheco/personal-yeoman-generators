@@ -21,6 +21,6 @@
     "bluebird-inquirer": "0.0.1",
     "boolean": "^0.1.0",
     "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
-    "yeoman-generator": "^0.18.9"
+    "yeoman-generator": "olsonpm/generator#personal-0.20.1"
   }
 }

@@ -13,7 +13,8 @@ var generators = require('yeoman-generator')
     , l = require('lambda-js')
     , toBool = require('boolean')
     , through2 = require('through2')
-    , jsBeautify = require('js-beautify').js_beautify;
+    , jsBeautify = require('js-beautify').js_beautify
+    , camelcase = require('camelcase');
 
 
 //------//
@@ -21,8 +22,12 @@ var generators = require('yeoman-generator')
 //------//
 
 var TASKS_DIR_DEFAULT = 'tasks';
+
 var includeExpressOpt
-    , angularModuleNameOpt;
+    , includeAngularOpt
+    , angularModuleNameOpt
+    , skipInstallOpt
+    , shouldInstall;
 
 
 //------//
@@ -38,6 +43,7 @@ module.exports = generators.Base.extend({
         this.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
@@ -53,32 +59,40 @@ module.exports = generators.Base.extend({
             required: false
         });
         this.option('includeExpress');
+
+        this.option('includeAngular', {
+            desc: 'Specifies whether this is an angular app'
+        });
         this.option('angularModuleName');
         this.taskDir = this.taskDir || TASKS_DIR_DEFAULT;
 
-        /*
-        this.npmInstall([
-            'bluebird'
-            , 'browserify'
-            , 'fs-bluebird'
-            , 'gulp-angular-templatecache'
-            , 'mkdirp'
-            , 'ncp'
-            , 'stream-to-promise'
-            , 'through2'
-            , 'rimraf'
-            , 'tiny-lr'
-            , 'minifyify'
-            , 'vinyl-fs'
-            , 'vinyl-source-stream'
-            , 'vinyl-transform'
-            , 'git://github.com/olsonpm/node-helpers.git'
-            , 'git://github.com/sass/node-sass.git'
-            , 'git://github.com/olsonpm/promise-task-runner.git'
-        ], {
-            'save': true
-        });
-        */
+        this.option('skipInstall');
+        skipInstallOpt = toBool(this.options.skipInstall);
+        shouldInstall = !skipInstallOpt;
+
+        if (shouldInstall) {
+            this.npmInstall([
+                'bluebird'
+                , 'browserify'
+                , 'fs-bluebird'
+                , 'gulp-angular-templatecache'
+                , 'mkdirp'
+                , 'ncp'
+                , 'stream-to-promise'
+                , 'through2'
+                , 'rimraf'
+                , 'tiny-lr'
+                , 'minifyify'
+                , 'vinyl-fs'
+                , 'vinyl-source-stream'
+                , 'vinyl-transform'
+                , 'git://github.com/olsonpm/node-helpers.git'
+                , 'git://github.com/olsonpm/node-sass-bluebird.git'
+                , 'git://github.com/olsonpm/promise-task-runner.git'
+            ], {
+                'save': true
+            });
+        }
     },
     'prompting': function prompting() {
         var self = this;
@@ -92,7 +106,7 @@ module.exports = generators.Base.extend({
             pname.getPrompt() // only prompts if a project name wasn't passed in via arguments
             , {
                 'name': 'includeExpress'
-                , 'message': 'Include express? (y/n)'
+                , 'message': 'Is this an express app? (y/n)'
                 , 'type': 'list'
                 , 'choices': ['y', 'n']
                 , 'default': 1
@@ -100,18 +114,29 @@ module.exports = generators.Base.extend({
                     return typeof self.options.includeExpress === 'undefined';
                 }
             }, {
+                'name': 'includeAngular'
+                , 'message': 'Is this an angular app? (y/n)'
+                , 'type': 'list'
+                , 'choices': ['y', 'n']
+                , 'default': 1
+                , 'when': function() {
+                    return typeof self.options.includeAngular === 'undefined';
+                }
+            }, {
                 'name': 'angularModuleName'
-                , 'message': 'If using angular, type the module name (camel-casing with namespacing)'
+                , 'message': 'Angular module name (camel-casing with namespacing)'
                 , 'type': 'input'
                 , 'validate': function(input) {
-                        if (input === '') return true;
-
-                        return (input === '' || input.match(/^[a-z][a-zA-Z0-9\.]*$/))
+                        return (input === '' || (input.match(/^[a-z][a-zA-Z0-9\.]*$/)))
                             ? true
-                            : "Module name must match the following regex: /[a-z][a-zA-Z0-9\.]*/";
+                            : "Module name must be empty or match the following regex: /^[a-z][a-zA-Z0-9\.]*/";
                     }
-                , 'when': function() {
-                    return typeof self.options.angularModuleName === 'undefined';
+                , 'default': function(answers) {
+                        return camelcase(self.projectNameArg || answers.projectName || path.basename(self.destinationRoot()));
+                    }
+                , 'when': function(answers) {
+                    return typeof self.options.angularModuleName === 'undefined'
+                        && (toBool(self.options.includeAngular) || answers.includeAngular === 'y');
                 }
             }
         ]).then(function(answers) {
@@ -121,7 +146,7 @@ module.exports = generators.Base.extend({
             includeExpressOpt = toBool(self.options.includeExpress) || (answers.includeExpress === 'y');
             angularModuleNameOpt = self.options.angularModuleName || answers.angularModuleName;
 
-            if (self.options.includeExpress === 'y') {
+            if (self.options.includeExpress === 'y' && shouldInstall) {
                 self.npmInstall([
                     'compression'
                     , 'express'
@@ -149,8 +174,8 @@ module.exports = generators.Base.extend({
             self.templatePath("**/*")
             , self.destinationPath()
             , {
-                includeExpress: self.options.includeExpress
-                , angularModuleName: self.options.angularModuleName
+                includeExpress: includeExpressOpt
+                , angularModuleName: angularModuleNameOpt
                 , projectNameEnv: path.basename(self.destinationRoot()).toUpperCase().replace(/-/g, "_") + "_NODE_ENV"
             }
         );

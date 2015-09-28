@@ -20,11 +20,12 @@
     "bluebird": "^2.9.9",
     "bluebird-inquirer": "0.0.1",
     "boolean": "^0.1.0",
+    "camelcase": "^1.1.0",
     "fs-bluebird": "^0.1.2",
     "js-beautify": "olsonpm/js-beautify#personal-copy",
     "lambda-js": "^0.1.5",
     "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
     "through2": "^0.6.5",
-    "yeoman-generator": "^0.18.9"
+    "yeoman-generator": "olsonpm/generator#personal-0.20.1"
   }
 }

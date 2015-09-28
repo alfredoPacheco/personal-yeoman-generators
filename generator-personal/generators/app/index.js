@@ -11,7 +11,9 @@ var generators = require('yeoman-generator')
     , path = require('path')
     , camelcase = require('camelcase')
     , lazy = require('node-helpers').lazyExtensions
-    , toBool = require('boolean');
+    , toBool = require('boolean')
+    , through2 = require('through2')
+    , jsBeautify = require('js-beautify').js_beautify;
 
 
 //------//
@@ -19,6 +21,7 @@ var generators = require('yeoman-generator')
 //------//
 
 var argsArray;
+
 require('events').EventEmitter.defaultMaxListeners = 20;
 
 
@@ -36,6 +39,7 @@ module.exports = generators.Base.extend({
         this.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
@@ -50,7 +54,7 @@ module.exports = generators.Base.extend({
         }
 
         this.option('angularModuleName', {
-            desc: "The angular module name"
+            desc: "Sets the angular module name"
         });
         this.option('includeExpress', {
             desc: 'Includes the express framework'
@@ -188,7 +192,7 @@ module.exports = generators.Base.extend({
                     self.destinationRoot(path.join(self.destinationRoot(), answers.projectName));
                     self.projectNameArg = answers.projectName;
                 }
-                var angularModuleNameOpt = self.options.angularModuleName || answers.angularModuleName;
+                var angularModuleNameOpt = (self.options.angularModuleName || answers.angularModuleName);
                 var includeExpressOpt = toBool(self.options.includeExpress) || (answers.includeExpress === 'y');
                 var includePerfectScrollbarOpt = toBool(self.options.includePerfectScrollbar) || (answers.includePerfectScrollbar === 'y');
                 var includeBuddySystemOpt = toBool(self.options.includeBuddySystem) || (answers.includeBuddySystem === 'y');
@@ -198,6 +202,7 @@ module.exports = generators.Base.extend({
                 var includeHerokuOpt = toBool(self.options.includeHeroku) || (answers.includeHeroku === 'y');
                 var includePostgresqlOpt = toBool(self.options.includePostgresql) || (answers.includePostgresql === 'y');
                 var emptyProjectNameOpt = toBool(self.options.emptyProjectName);
+                var skipInstallOpt = toBool(self.options.skipInstall);
 
                 var defaultOptions = lazy({});
                 if (emptyProjectNameOpt) {
@@ -207,85 +212,142 @@ module.exports = generators.Base.extend({
                 }
 
                 self.composeWith('personal-angular', {
-                    args: argsArray
-                    , options: defaultOptions.extend({
-                        angularModuleName: angularModuleNameOpt
-                        , includeBuddySystem: includeBuddySystemOpt
-                        , includeHoverIntent: includeHoverIntentOpt
-                    }).toObject()
-                });
+                        args: argsArray
+                        , options: defaultOptions.extend({
+                            angularModuleName: angularModuleNameOpt
+                            , includeBuddySystem: includeBuddySystemOpt
+                            , includeHoverIntent: includeHoverIntentOpt
+                            , skipInstall: skipInstallOpt
+                        }).toObject()
+                    }
+                    , {
+                        local: require.resolve('generator-personal-angular')
+                    });
                 self.composeWith('personal-express', {
-                    args: argsArray
-                    , options: defaultOptions.toObject()
-                });
+                        args: argsArray
+                        , options: defaultOptions.extend({
+                            skipInstall: skipInstallOpt
+                        }).toObject()
+                    }
+                    , {
+                        local: require.resolve('generator-personal-express')
+                    });
                 if (includeFontsOpt) {
                     self.composeWith('personal-fonts', {
-                        args: argsArray
-                        , options: defaultOptions.toObject()
-                    });
+                            args: argsArray
+                            , options: defaultOptions.toObject()
+                        }
+                        , {
+                            local: require.resolve('generator-personal-fonts')
+                        });
                 }
 
                 self.composeWith('personal-javascript-libs', {
-                    args: argsArray
-                    , options: defaultOptions.extend({
-                        perfectScrollbar: includePerfectScrollbarOpt
-                        , buddySystem: includeBuddySystemOpt
-                        , hoverIntent: includeHoverIntentOpt
-                    }).toObject()
-                });
+                        args: argsArray
+                        , options: defaultOptions.extend({
+                            perfectScrollbar: includePerfectScrollbarOpt
+                            , buddySystem: includeBuddySystemOpt
+                            , hoverIntent: includeHoverIntentOpt
+                            , skipInstall: skipInstallOpt
+                        }).toObject()
+                    }
+                    , {
+                        local: require.resolve('generator-personal-javascript-libs')
+                    });
 
                 self.composeWith('personal-pjson', {
-                    args: argsArray
-                    , options: defaultOptions.extend({
-                        includeAngular: angularModuleNameOpt
-                    }).toObject()
-                });
+                        args: argsArray
+                        , options: defaultOptions.extend({
+                            includeAngular: angularModuleNameOpt
+                        }).toObject()
+                    }
+                    , {
+                        local: require.resolve('generator-personal-pjson')
+                    });
 
                 self.composeWith('personal-ptr', {
-                    args: argsArray
-                    , options: defaultOptions.extend({
-                        includeExpress: includeExpressOpt
-                        , angularModuleName: angularModuleNameOpt
-                    }).toObject()
-                });
+                        args: argsArray
+                        , options: defaultOptions.extend({
+                            includeExpress: includeExpressOpt
+                            , includeAngular: true
+                            , angularModuleName: angularModuleNameOpt
+                            , skipInstall: skipInstallOpt
+                        }).toObject()
+                    }
+                    , {
+                        local: require.resolve('generator-personal-ptr')
+                    });
 
                 self.composeWith('personal-scss', {
-                    args: argsArray
-                    , options: defaultOptions.extend({
-                        includePerfectScrollbar: includePerfectScrollbarOpt
-                        , includeFonts: includeFontsOpt
-                    }).toObject()
-                });
+                        args: argsArray
+                        , options: defaultOptions.extend({
+                            includePerfectScrollbar: includePerfectScrollbarOpt
+                            , includeFonts: includeFontsOpt
+                            , skipInstall: skipInstallOpt
+                        }).toObject()
+                    }
+                    , {
+                        local: require.resolve('generator-personal-scss')
+                    });
 
                 if (includeGitOpt) {
                     self.composeWith('personal-git', {
-                        args: argsArray
-                        , options: defaultOptions.extend({
-                            repoName: self.projectNameArg || path.basename(self.destinationRoot())
-                        }).toObject()
-                    });
+                            args: argsArray
+                            , options: defaultOptions.extend({
+                                repoName: self.projectNameArg || path.basename(self.destinationRoot())
+                                , includePostgresql: includePostgresqlOpt
+                            }).toObject()
+                        }
+                        , {
+                            local: require.resolve('generator-personal-git')
+                        });
                 }
 
                 if (includeHerokuOpt) {
                     self.composeWith('personal-heroku', {
-                        args: argsArray
-                        , options: defaultOptions.extend({
-                            herokuAppName: self.projectNameArg || path.basename(self.destinationRoot())
-                        }).toObject()
-                    });
+                            args: argsArray
+                            , options: defaultOptions.extend({
+                                herokuAppName: self.projectNameArg || path.basename(self.destinationRoot())
+                            }).toObject()
+                        }
+                        , {
+                            local: require.resolve('generator-personal-heroku')
+                        });
                 }
 
                 if (includePostgresqlOpt) {
                     self.composeWith('personal-postgresql', {
-                        args: argsArray
-                        , options: defaultOptions.extend({
-                            dbName: (self.projectNameArg || path.basename(self.destinationRoot())).replace(/-/g, '_')
-                            , includeHeroku: includeHerokuOpt
-                        }).toObject()
-                    });
+                            args: argsArray
+                            , options: defaultOptions.extend({
+                                dbName: (self.projectNameArg || path.basename(self.destinationRoot())).replace(/-/g, '_')
+                                , includeHeroku: includeHerokuOpt
+                                    // since both the git and postgres generators are expected to add the postgresql gitignore entries,
+                                    //  we will let the git generator handle this
+                                , includeGit: false
+                                , skipInstall: skipInstallOpt
+                            }).toObject()
+                        }
+                        , {
+                            local: require.resolve('generator-personal-postgresql')
+                        });
                 }
+
+                // small hack to get transfomers working
+
 
                 done();
             });
+    }, 'writing': function writing() {
+        var self = this;
+
+        self.registerTransformStream(
+            through2.obj(function(file, enc, cb) {
+                if (path.extname(file.path) === '.js') {
+                    file.contents = new Buffer(jsBeautify(file.contents.toString()));
+                }
+                this.push(file);
+                cb();
+            })
+        );
     }
 });

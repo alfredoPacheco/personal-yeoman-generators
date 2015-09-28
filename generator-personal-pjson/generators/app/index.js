@@ -30,8 +30,9 @@ var npmArbitraryDefaults = {
 var EOL = require('os').EOL;
 var packageJson = {};
 
-var pname;
-var includeAngularOpt;
+var pname
+    , includeAngularOpt;
+
 
 //------//
 // Main //
@@ -46,6 +47,7 @@ module.exports = generators.Base.extend({
         this.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"

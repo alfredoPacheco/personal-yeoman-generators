@@ -14,7 +14,6 @@ var generators = require('yeoman-generator')
     , lazy = require('node-helpers').lazyExtensions
     , toBool = require('boolean')
     , path = require('path')
-    , bFs = require('fs-bluebird')
     , bTouch = bPromise.promisify(require('touch'));
 
 
@@ -25,7 +24,8 @@ var generators = require('yeoman-generator')
 var dbNameOpt
     , includeHerokuOpt
     , dropExistingDatabaseOpt
-    , isExistingGitRepo;
+    , includeGitOpt
+    , skipInstallOpt;
 
 
 //------//
@@ -41,6 +41,7 @@ module.exports = generators.Base.extend({
         this.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
@@ -60,13 +61,19 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-heroku requires the HEROKU_API_TOKEN environment variable to be set");
         }
 
-        this.npmInstall([
-            'mocha'
-            , 'chai'
-            , 'git://github.com/olsonpm/node-helpers.git'
-        ], {
-            'save': true
-        });
+        this.option('skipInstall');
+        skipInstallOpt = toBool(this.options.skipInstall);
+        var shouldInstall = !skipInstallOpt;
+
+        if (shouldInstall) {
+            this.npmInstall([
+                'mocha'
+                , 'chai'
+                , 'git://github.com/olsonpm/node-helpers.git'
+            ], {
+                'save': true
+            });
+        }
     },
     'prompting': function prompting() {
         var self = this;
@@ -97,6 +104,15 @@ module.exports = generators.Base.extend({
                     , 'default': 1
                     , 'when': function() {
                         return typeof self.options.includeHeroku === 'undefined';
+                    }
+                }, {
+                    'name': 'includeGit'
+                    , 'message': 'Is this a git repository? (y/n)'
+                    , 'type': 'list'
+                    , 'choices': ['y', 'n']
+                    , 'default': 1
+                    , 'when': function() {
+                        return typeof self.options.includeGit === 'undefined';
                     }
                 }, {
                     'name': 'dropExistingDatabase'
@@ -142,13 +158,27 @@ module.exports = generators.Base.extend({
                 dbNameOpt = self.options.dbName || answers.dbName;
                 includeHerokuOpt = toBool(self.options.includeHeroku) || (answers.includeHeroku === 'y');
                 dropExistingDatabaseOpt = toBool(self.options.dropExistingDatabase) || (answers.dropExistingDatabase === 'y');
-                isExistingGitRepo = bFs.existsSync(path.join(self.destinationRoot(), '.git'));
+                includeGitOpt = toBool(self.options.includeGit) || (answers.includeGit === 'y');
                 done();
             });
     },
     'writing': function writing() {
         var self = this;
         var done = self.async();
+
+        var filesToIgnore = 'db/data-backups';
+        var gitignore = '.gitignore';
+        if (includeGitOpt) {
+            if (self.fs.exists('.gitignore')) {
+                var gitignoreContents = self.fs.read('.gitignore');
+                var lazyLines = lazy(gitignoreContents.split("\n"));
+                if (!lazyLines.has(filesToIgnore)) {
+                    self.fs.append(gitignore, filesToIgnore);
+                }
+            } else {
+                self.fs.write(gitignore, filesToIgnore);
+            }
+        }
 
         var handleDb = bPromise.all([
                 createDbUserIfNotExists(dbNameOpt)
@@ -172,42 +202,7 @@ module.exports = generators.Base.extend({
                 ]);
             });
 
-        var gitignoreFile = path.join(self.destinationRoot(), '.gitignore');
-        var handleGit = (isExistingGitRepo)
-            ? bFs.readFileAsync(gitignoreFile)
-            .catch(function(err) {
-                var bRes;
-
-                if (err.code === 'ENOENT') {
-                    bRes = bTouch(gitignoreFile)
-                        .then(function() {
-                            return bFs.readFileAsync(gitignoreFile);
-                        });
-                } else {
-                    throw err;
-                }
-
-                return bRes;
-            })
-            .then(function(buf) {
-                var lazyLines = lazy(buf.toString().split("\n"));
-                var gitIgnoreBackups = 'db/data-backups';
-                var bRes = bPromise.resolve();
-
-                if (!lazyLines.has(gitIgnoreBackups)) {
-                    bRes = bRes.then(function() {
-                        return bFs.appendFileAsync(gitignoreFile, gitIgnoreBackups + "\n");
-                    });
-                }
-
-                return bRes;
-            })
-            : bPromise.resolve();
-
-        bPromise.all(
-            handleDb
-            , handleGit
-        ).then(function() {
+        handleDb.then(function() {
             writeTemplate();
             done();
         });

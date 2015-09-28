@@ -9,7 +9,8 @@ var generators = require('yeoman-generator')
     , bPromise = require('bluebird')
     , pgc = require('personal-generator-common')
     , bInquirer = require('bluebird-inquirer')
-    , path = require('path');
+    , path = require('path')
+    , toBool = require('boolean');
 
 
 //------//
@@ -17,7 +18,9 @@ var generators = require('yeoman-generator')
 //------//
 
 var bPrompt = bPromise.promisify(generators.Base.prototype.prompt);
-var promptAnswers;
+
+var promptAnswers
+    , skipInstallOpt;
 
 
 //------//
@@ -31,6 +34,7 @@ module.exports = generators.Base.extend({
         this.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
@@ -46,13 +50,19 @@ module.exports = generators.Base.extend({
             throw new Error("generator-personal-express only expects up to one argument (project name).  The following were given: " + arguments[0]);
         }
 
-        this.npmInstall([
-            'express'
-            , 'compression'
-            , 'lambda-js'
-        ], {
-            'save': true
-        });
+        this.option('skipInstall');
+        skipInstallOpt = toBool(this.options.skipInstall);
+        var shouldInstall = !skipInstallOpt;
+
+        if (shouldInstall) {
+            this.npmInstall([
+                'express'
+                , 'compression'
+                , 'lambda-js'
+            ], {
+                'save': true
+            });
+        }
     },
     'prompting': function prompting() {
         var self = this;

@@ -26,6 +26,6 @@
     "node-helpers": "git://github.com/olsonpm/node-helpers.git",
     "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
     "ttf2woff": "^1.3.0",
-    "yeoman-generator": "^0.18.9"
+    "yeoman-generator": "olsonpm/generator#personal-0.20.1"
   }
 }

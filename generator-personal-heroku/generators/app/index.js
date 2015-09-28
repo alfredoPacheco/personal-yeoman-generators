@@ -11,7 +11,8 @@ var generators = require('yeoman-generator')
     , https = require('https')
     , sys = require('sys')
     , exec = require('child_process').exec
-    , toBool = require('boolean');
+    , toBool = require('boolean')
+    , path = require('path');
 
 
 //------//
@@ -34,6 +35,7 @@ module.exports = generators.Base.extend({
         this.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"

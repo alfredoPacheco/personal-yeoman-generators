@@ -36,7 +36,8 @@ var jsLibsInstall = {
     , perfectScrollbar: 'git://github.com/noraesae/perfect-scrollbar.git'
 };
 
-var includeAllOpt;
+var includeAllOpt
+    , skipInstallOpt;
 
 
 //------//
@@ -55,6 +56,7 @@ module.exports = generators.Base.extend({
         self.argument('projectName', {
             required: false
         });
+        this.projectNameArg = this.projectName;
 
         this.option('emptyProjectName', {
             desc: "Set if you want to use the current directory as the project - This option gets around yeoman's unable to pass empty arguments"
@@ -72,6 +74,9 @@ module.exports = generators.Base.extend({
         });
 
         includeAllOpt = toBool(self.options.includeAll);
+
+        self.option('skipInstall');
+        skipInstallOpt = toBool(self.options.skipInstall);
     },
     'prompting': function prompting() {
         var self = this;
@@ -98,9 +103,13 @@ module.exports = generators.Base.extend({
                         })
                         .toArray();
 
-                    self.npmInstall(installList, {
-                        'save': true
-                    });
+                    var shouldInstall = !skipInstallOpt;
+
+                    if (shouldInstall) {
+                        self.npmInstall(installList, {
+                            'save': true
+                        });
+                    }
                 }
                 done();
             });

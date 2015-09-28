@@ -25,6 +25,6 @@
     "npm": "^2.11.0",
     "personal-generator-common": "git://github.com/olsonpm/personal-generator-common.git",
     "rimraf": "^2.2.8",
-    "yeoman-generator": "^0.18.9"
+    "yeoman-generator": "olsonpm/generator#personal-0.20.1"
   }
 }
