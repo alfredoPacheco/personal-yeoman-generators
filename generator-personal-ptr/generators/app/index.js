@@ -78,6 +78,7 @@ module.exports = generators.Base.extend({
                 , 'gulp-angular-templatecache'
                 , 'mkdirp'
                 , 'ncp'
+                , 'node-sass'
                 , 'stream-to-promise'
                 , 'through2'
                 , 'rimraf'
@@ -87,7 +88,6 @@ module.exports = generators.Base.extend({
                 , 'vinyl-source-stream'
                 , 'vinyl-transform'
                 , 'git://github.com/olsonpm/node-helpers.git'
-                , 'git://github.com/olsonpm/node-sass-bluebird.git'
                 , 'git://github.com/olsonpm/promise-task-runner.git'
             ], {
                 'save': true
